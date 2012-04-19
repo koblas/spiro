@@ -1,0 +1,3 @@
+
+class Store(object):
+    pass

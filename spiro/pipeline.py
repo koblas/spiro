@@ -1,4 +1,6 @@
+from tornado import gen
 from tornado.util import import_object
+from spiro.processor.base import Step
 
 class Pipeline(object):
     def __init__(self, stages=[], **kwargs):
@@ -10,6 +12,24 @@ class Pipeline(object):
                 cls = item
             self.steps.append(cls(**kwargs))
 
-    def __call__(self, *args, **kwargs):
+    @gen.engine
+    def process(self, *args, **kwargs):
+        if not args:
+            args = [None]
+
+        callback = kwargs.pop('callback')
+
+        nargs = args
         for item in self.steps:
-            v = item.process(*args, **kwargs)
+            yvalue = yield gen.Task(item.process, *nargs, **kwargs)
+
+            # print "Call = %r   Val = %r" % (item, yvalue)
+            action, res = yvalue
+
+            if action == Step.STOP:
+                break
+            # print 'in = %r   out = %r' % (nargs[0], res)
+            nargs = [res]
+
+        if callback:
+            callback(res)

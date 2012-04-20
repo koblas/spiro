@@ -26,3 +26,6 @@ class RiakStore(Store):
         }
 
         self.bucket.new(response.request.url, data).store()
+
+    def has(self, url):
+        return True

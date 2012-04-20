@@ -1,26 +1,26 @@
 import urlparse
-from .base import LinkExtractorBase
+from .base import Step
 
 """
 Instead of handling 30X redirects as a HTTP case, we're handling them in the
 response pipeline.
 """
 
-class RedirectExtraction(LinkExtractorBase):
+class RedirectExtraction(Step):
     def __init__(self, settings, **kwargs):
         """Initialzation"""
         pass
 
-    def process(self, response, **kwargs):
-        if 300 <= response.code < 400:
-            location = response.headers.get('location', None)
+    def process(self, task, callback=None, **kwargs):
+        if 300 <= task.response.code < 400:
+            location = task.response.headers.get('location', None)
             
             if not location:
-                return response
+                callback((Step.CONTINUE, task))
 
             if location.find('://') == -1:
-                location = urlparse.urljoin(response.request.url, location)
+                location = urlparse.urljoin(task.request.url, location)
 
-            self.add_extracted_url(response, location)
+            self.add_extracted_url(task.response, location)
 
-        return response
+        callback((Step.CONTINUE, task))

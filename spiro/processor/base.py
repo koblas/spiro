@@ -1,3 +1,6 @@
+class Step(object):
+    CONTINUE = 1
+    STOP     = 2
 
 class LinkExtractorBase(object):
     def add_extracted_url(self, response, url):

@@ -1,16 +1,16 @@
 from pyquery import PyQuery as pq
 from urlparse import urljoin
 
-from .base import LinkExtractorBase
+from .base import Step
 
-class HtmlLinkExtractor(LinkExtractorBase):
+class HtmlLinkExtractor(Step):
     def __init__(self, settings, **kwargs):
         pass
 
-    def process(self, response):
-        url = response.request.url
+    def process(self, task, callback=None, **kwargs):
+        url = task.request.url
 
-        q = pq(response.body)
+        q = pq(task.response.body)
         for link in q('a'):
             href = link.attrib.get('href', None)
             if not href:
@@ -20,6 +20,6 @@ class HtmlLinkExtractor(LinkExtractorBase):
             full_url = full_url.split('#', 1)[0]
 
             if full_url.startswith('http://') or full_url.startswith('https://'):
-                self.add_extracted_url(response, full_url)
+                task.links.append(full_url)
 
-        return response
+        callback((Step.CONTINUE, task))

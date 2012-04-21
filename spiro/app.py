@@ -20,6 +20,7 @@ from spiro.web import MainHandler, ChannelRouter, ClientChannel
 from spiro.queue import SimpleQueue
 from spiro.pipeline import Pipeline
 from spiro.task import Task
+from spiro import models
 
 #
 #
@@ -60,7 +61,8 @@ class Application(tornado.web.Application):
         
 
 class Worker(object):
-    def __init__(self, settings, queue, io_loop=None):
+    def __init__(self, app, settings, queue, io_loop=None):
+        self.app      = app
         self.ioloop   = io_loop or tornado.ioloop.IOLoop.instance()
         self.queue    = queue
         self.pipeline = Pipeline(settings.PIPELINE, settings=settings, work_queue=queue)
@@ -79,15 +81,18 @@ class Worker(object):
 
             yield gen.Task(self.pipeline.process, task)
 
+            self.app.channel.send("logevents:create", models.LogEvent("Crawled %s" % url).serialize())
+
         self.ioloop.add_callback(self.loop)
 
 def main():
     tornado.options.parse_command_line()
 
     queue    = SimpleQueue()
-    worker   = Worker(settings, queue)
+    app      = Application(queue)
+    worker   = Worker(app, settings, queue)
 
-    http_server = tornado.httpserver.HTTPServer(Application(queue))
+    http_server = tornado.httpserver.HTTPServer(app)
 
     def add_item(sender, url=None, **kwargs):
         print("ADDING TO QUEUE %s " % url)

@@ -1,6 +1,28 @@
-Hello, World.
+{% extends "_base.html" %}
 
-<form method="POST" action="{{ request.path }}">
-URL: <input type="text" name="url"/>
-<input type="submit"/>
-</form>
+{% block title %}Home Page{% end %}
+
+{% block content %}
+
+<div id="TaskWrapper"></div>
+<h3>Events</h3>
+<div id="LogEventWrapper"></div>
+
+<script type="text/template" id="event-item-template">
+  <div>NOW: {{! msg }}</div>
+</script>
+
+<script type="text/template" id="item-template">
+</script>
+
+<script type="text/template" id="form-template">
+    <form id="TaskInput" method="POST" action="{{ request.path }}">
+        URL: <input type="text" name="url"/>
+        <input id="add" type="submit"/>
+    </form>
+</script>
+
+<script src="/static/app/application.js"></script>
+<script src="/static/app/log_event.js"></script>
+
+{% end %}

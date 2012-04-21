@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import logging
+from spiro.signal import client_message
 import os
 import settings
 from datetime import timedelta
@@ -14,16 +16,21 @@ define("prefork", default=False, help="pre-fork across all CPUs", type=bool)
 define("port", default=9000, help="run on the given port", type=int)
 define("bootstrap", default=False, help="Run the bootstrap model commands")
 
-from spiro.web import MainHandler
-from spiro.fetcher import Queue
+from spiro.web import MainHandler, ChannelRouter, ClientChannel
+from spiro.queue import SimpleQueue
 from spiro.pipeline import Pipeline
 from spiro.task import Task
 
+#
+#
+#
 class Application(tornado.web.Application):
     def __init__(self, work_queue):
-        handlers = (
-            (r"/", MainHandler),
-        )
+        handlers = [
+            (r"/", MainHandler)
+        ]
+
+        ChannelRouter.apply_routes(handlers)
 
         app_settings = dict(
             debug=options.debug,
@@ -31,9 +38,26 @@ class Application(tornado.web.Application):
             static_path=os.path.join(os.path.dirname(__file__), "web", "static"),
         )
 
+
         self.work_queue = work_queue
 
         super(Application, self).__init__(handlers, **app_settings)
+
+        self.channel = ClientChannel
+        self.ioloop  = tornado.ioloop.IOLoop.instance()
+        self.ioloop.add_timeout(timedelta(seconds=1), self.ping)
+
+    def ping(self):
+        #ClientChannel.emit_log_event("HI DAVE")
+
+        import time, hashlib
+        eid = hashlib.md5("%f" % time.time()).hexdigest()
+
+        # self.channel.send("logevents:create", {'id': eid, 'msg': 'hi dave! - %d' % time.time()})
+
+        self.ioloop.add_timeout(timedelta(seconds=1), self.ping)
+        pass
+        
 
 class Worker(object):
     def __init__(self, settings, queue, io_loop=None):
@@ -60,12 +84,16 @@ class Worker(object):
 def main():
     tornado.options.parse_command_line()
 
-    queue    = Queue()
+    queue    = SimpleQueue()
     worker   = Worker(settings, queue)
 
     http_server = tornado.httpserver.HTTPServer(Application(queue))
 
-    queue.add('http://wink.com')
+    def add_item(sender, url=None, **kwargs):
+        print("ADDING TO QUEUE %s " % url)
+        queue.add(url)
+
+    client_message.signal('task:create').connect(add_item)
 
     print "Starting tornado on port", options.port
     if options.prefork:

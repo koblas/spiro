@@ -25,5 +25,7 @@ class NeedFetch(Step):
 
     def process(self, task, callback=None, **kwargs):
         if self.store.has(task.url):
-            callback((self.STOP, task))
-        callback((Step.CONTINUE, task))
+            action = Step.STOP
+        else:
+            action = Step.CONTINUE
+        callback((action, task))

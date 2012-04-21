@@ -1,3 +1,4 @@
+import logging
 from tornado import gen
 from tornado.util import import_object
 from spiro.processor.base import Step
@@ -27,6 +28,7 @@ class Pipeline(object):
             action, res = yvalue
 
             if action == Step.STOP:
+                logging.debug("Processing stoped by %s" % item.__class__.__name__)
                 break
             # print 'in = %r   out = %r' % (nargs[0], res)
             nargs = [res]

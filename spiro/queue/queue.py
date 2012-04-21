@@ -1,6 +1,6 @@
 from collections import deque
 
-class Queue(object):
+class SimpleQueue(object):
     def __init__(self):
         self.queue = deque()
 

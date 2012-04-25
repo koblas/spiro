@@ -16,7 +16,7 @@ define("prefork", default=False, help="pre-fork across all CPUs", type=bool)
 define("port", default=9000, help="run on the given port", type=int)
 define("bootstrap", default=False, help="Run the bootstrap model commands")
 
-from spiro.web import MainHandler, ChannelRouter, ClientChannel
+from spiro.web import MainHandler, ChatHandler, ChannelRouter, ClientChannel, BacksyncChannel, BacksyncRouter
 from spiro.queue import SimpleQueue
 from spiro.pipeline import Pipeline
 from spiro.task import Task
@@ -28,10 +28,12 @@ from spiro import models
 class Application(tornado.web.Application):
     def __init__(self, work_queue):
         handlers = [
-            (r"/", MainHandler)
+            (r"/", MainHandler),
+            (r"/chatty", ChatHandler)
         ]
 
-        ChannelRouter.apply_routes(handlers)
+        #ChannelRouter.apply_routes(handlers)
+        BacksyncRouter.apply_routes(handlers)
 
         app_settings = dict(
             debug=options.debug,
@@ -39,12 +41,12 @@ class Application(tornado.web.Application):
             static_path=os.path.join(os.path.dirname(__file__), "web", "static"),
         )
 
-
         self.work_queue = work_queue
 
         super(Application, self).__init__(handlers, **app_settings)
 
-        self.channel = ClientChannel
+        #self.channel = ClientChannel
+        self.channel = BacksyncChannel
         self.ioloop  = tornado.ioloop.IOLoop.instance()
         self.ioloop.add_timeout(timedelta(seconds=1), self.ping)
 
@@ -81,7 +83,9 @@ class Worker(object):
 
             yield gen.Task(self.pipeline.process, task)
 
-            self.app.channel.send("logevents:create", models.LogEvent("Crawled %s" % url).serialize())
+            #self.app.channel.send("logevents:create", models.LogEvent("Crawled %s" % url).serialize())
+
+            models.LogEvent("Crawled %s" % url).save()
 
         self.ioloop.add_callback(self.loop)
 
@@ -94,11 +98,11 @@ def main():
 
     http_server = tornado.httpserver.HTTPServer(app)
 
-    def add_item(sender, url=None, **kwargs):
-        print("ADDING TO QUEUE %s " % url)
-        queue.add(url)
+    def add_item(sender, instance=None, **kwargs):
+        logging.debug("ADDING TO QUEUE %s " % instance.url)
+        queue.add(instance.url)
 
-    client_message.signal('task:create').connect(add_item)
+    models.signals.post_save.connect(add_item, sender=models.SeedTask)
 
     print "Starting tornado on port", options.port
     if options.prefork:

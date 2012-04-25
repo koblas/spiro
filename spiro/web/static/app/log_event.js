@@ -2,7 +2,7 @@
 //
 //
 Spiro.LogEvent = Backbone.Model.extend({
-    urlRoot : 'logevent',
+    urlRoot : 'LogEvent',
     noIoBind: false,
     socket : window.socket,
     initialize: function() {
@@ -34,7 +34,7 @@ Spiro.LogEvent = Backbone.Model.extend({
 
 Spiro.LogEvents = Backbone.Collection.extend({
     model  : Spiro.LogEvent,
-    url    : 'logevents',
+    url    : 'LogEvent_Collection',
     socket : window.socket,
     initialize: function () {
         _.bindAll(this, 'serverCreate', 'collectionCleanup');

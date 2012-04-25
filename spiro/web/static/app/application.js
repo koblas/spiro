@@ -33,7 +33,7 @@ Spiro.App = Backbone.Router.extend({
 });
 
 Spiro.Task = Backbone.Model.extend({
-    urlRoot : 'task',
+    urlRoot : 'Task',
     noIoBind: false,
     socket : window.socket,
     initialize: function() {

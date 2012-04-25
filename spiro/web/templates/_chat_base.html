@@ -58,17 +58,15 @@
     <script src="/static/bootstrap/js/bootstrap.js"></script>
     <script src="/static/js/underscore-min.js"></script>
     <script src="/static/js/backbone.js"></script>
-    <script src="/static/js/socket.io.js"></script>
-    <script src="/static/js/backbone.iosync.js"></script>
-    <script src="/static/js/backbone.iobind.js"></script>
+    <script src="/static/js/alea.js"></script>
+    <script src="/static/js/Math.uuid.js"></script>
+    <script src="/static/js/sockjs-0.3.js"></script>
+
+    <xscript src="/static/js/backbone.iosync.js"></xscript>
+    <xscript src="/static/js/backbone.iobind.js"></xscript>
     
     <script>
-    WEB_SOCKET_SWF_LOCATION = '/static/WebSocketMain.swf';
-
     $(document).ready(function() {
-        window.socket = new io.connect('http://' + window.location.host, {
-                'transports' : ['xhr-polling']
-            });
     });
     </script>
 

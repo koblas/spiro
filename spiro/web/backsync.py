@@ -15,12 +15,7 @@ from sockjs.tornado import SockJSRouter, SockJSConnection
 class BacksyncChannel(SockJSConnection):
     master_session = None
     listeners = set()
-    MODELS = []
     _events = defaultdict(list)
-
-    @classmethod
-    def register(cls, name, model):
-        cls.MODELS.append((name, model))
 
     def on_open(self, request):
         #
@@ -35,18 +30,7 @@ class BacksyncChannel(SockJSConnection):
                 return None, func(*args, **kwargs)
             return inner
 
-        for name, model in self.MODELS:
-            for method in ['read', 'upsert', 'delete']:
-                m = getattr(model, 'handle_%s' % method, None)
-                if m:
-                    self._events["%s:%s" % (name, method)].append(wrap(m))
-            for method in ['open', 'close']:
-                m = getattr(model, 'handle_%s' % method, None)
-                if m:
-                    self._events["%s" % (method)].append(m)
-
-        for handler in self._events['open']:
-            handler(self.session)
+        # TEST
 
     def on_close(self):
         for handler in self._events['close']:
@@ -59,28 +43,34 @@ class BacksyncChannel(SockJSConnection):
         except :
             pass
 
-        event = msg['event']
+        model, method = msg['event'].split(':', 1)
+
+        cls = self.instance(model)
+        obj = cls(self.session)
+
         data  = msg.get('data', None)
         txid  = msg.get('id', None)
 
-        logging.debug("[%s] EVENT = %s  DATA = %r" % (txid, event, data))
+        logging.debug("[%s] EVENT = %s:%s  DATA = %r" % (txid, model, method, data))
 
+        func = getattr(obj, method)
         result = None
-        for handler in self._events.get(event, []):
-            if not data:
-                result = handler(self.session)
+
+        if func:
+            if data is None:
+                result = func()
             else:
-                result = handler(self.session, **data)
+                result = func(**data)
+        else:
+            logging.info("Missing method on %s for %s" % (model, method))
 
         if txid:
             response = {
                 'id'    : txid,
-                'event' : event,
+                'event' : '%s:%s' %  (model, method),
                 'data'  : result
             }
             self.send(response)
-
-        # self.emit(kwargs['event'], kwargs['data'])
 
     @classmethod
     def notify(cls, event, data):
@@ -88,4 +78,5 @@ class BacksyncChannel(SockJSConnection):
         if cls.master_session:
             cls.master_session.broadcast(cls.listeners, message)
 
+#BacksyncRouter = SockJSRouter(BacksyncChannel, '/backsync')
 BacksyncRouter = SockJSRouter(BacksyncChannel, '/backsync')

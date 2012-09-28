@@ -16,7 +16,9 @@ define("prefork", default=False, help="pre-fork across all CPUs", type=bool)
 define("port", default=9000, help="run on the given port", type=int)
 define("bootstrap", default=False, help="Run the bootstrap model commands")
 
-from spiro.web import MainHandler, ChatHandler, ChannelRouter, ClientChannel, BacksyncChannel, BacksyncRouter
+#from spiro.web import MainHandler, ChatHandler, BacksyncChannel, BacksyncRouter
+from spiro.web import MainHandler, ChatHandler, BacksyncChannel
+from spiro.backsync import BacksyncRouter
 from spiro.queue import SimpleQueue
 from spiro.pipeline import Pipeline
 from spiro.task import Task
@@ -33,6 +35,7 @@ class Application(tornado.web.Application):
         ]
 
         #ChannelRouter.apply_routes(handlers)
+        #BacksyncRouter.apply_routes(handlers)
         BacksyncRouter.apply_routes(handlers)
 
         app_settings = dict(
@@ -102,7 +105,7 @@ def main():
         logging.debug("ADDING TO QUEUE %s " % instance.url)
         queue.add(instance.url)
 
-    models.signals.post_save.connect(add_item, sender=models.SeedTask)
+    # models.signals.post_save.connect(add_item, sender=models.SeedTask)
 
     print "Starting tornado on port", options.port
     if options.prefork:

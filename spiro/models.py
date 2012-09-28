@@ -6,6 +6,13 @@ from blinker import Signal
 from spiro.signal import client_message
 from spiro.web import BacksyncChannel
 
+from spiro import backsync
+
+
+#
+#
+#
+#
 class Field(object):
     value   = None
     default = None
@@ -14,46 +21,13 @@ class Field(object):
         self.value = value
         self.default = default
 
-class backsync(object):
-    def __init__(self, name=None):
-        self.name = name
-
-    def __call__(self, klass):
-        name = self.name or klass.__name__
-        self.klass = klass
-        BacksyncChannel.register(name, klass)
-        klass.send_update = self.send_update
-        klass.send_delete = self.send_delete
-        return klass
-
-    def send_update(self, instance, created=False):
-        # print "SENDING UPSERT"
-        name = self.name or self.klass.__name__
-        BacksyncChannel.notify("%s:upsert" % (name), instance.serialize())
-
-    def send_delete(self, instance):
-        # print "SENDING DELET..."
-        name = self.name or self.klass.__name__
-        BacksyncChannel.notify("%s:delete" % (name), instance.serialize())
-
-
-# client_message.signal('Task:create').connect(test)
-
-class SignalHolder(object):
-    def __init__(self):
-        self.post_save     = Signal()
-        self.post_delete   = Signal()
-        self.client_update = Signal()
-
-signals = SignalHolder()
-
 class BackboneModel(object):
     """This model class will mimic the Backbone Model class to make usage more 
        consistent across JavaScript and Python.
     """
     _isNew    = True
 
-    def __init__(self, session, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         self._fields = {}
         for field in dir(self):
             v = getattr(self, field)
@@ -76,12 +50,15 @@ class BackboneModel(object):
         isNew = self._isNew
         self._isNew = False
         ## signals.post_save.send(self.__class__, instance=self, created=True)
-        self.send_update(self, created=isNew)
+
+        # TODO - self.send_update(self, created=isNew)
 
     def destroy(self, *args, **kwargs):
+        pass
         # super(NotifyBase, self).delete(*args, **kwargs)
         ## signals.post_delete.send(self.__class__, instance=self)
-        self.send_delete(self)
+
+        # TODO - self.send_delete(self)
 
     @classmethod
     def find(self, **kwargs):
@@ -97,31 +74,6 @@ class BackboneModel(object):
             data[field] = getattr(self, field)
         return data
 
-    # HMM....
-
-    @classmethod
-    def handle_read(cls, session, *args, **kwargs):
-        v = [msg.serialize() for msg in cls.find(session)]
-        print cls, v
-        return v
-
-    # TODO - Make it all upsert
-    @classmethod
-    def handle_upsert(cls, session, *args, **kwargs):
-        obj = cls.find(session, **kwargs)
-        if obj is None:
-            obj = cls(session, *args, **kwargs)
-        else:
-            obj.set(**kwargs)
-        obj.save()
-        return obj.serialize()
-
-    @classmethod
-    def handle_delete(cls, session, *args, **kwargs):
-        obj = cls.find(session, **kwargs)
-        obj.destroy(**kwargs)
-        return {}
-#
 #
 #
 class LogEvent(BackboneModel):
@@ -145,42 +97,22 @@ class SeedTask(BackboneModel):
 #
 #
 #
-@backsync('User')
-class ChatUser(BackboneModel):
-    USERS = {}
+USERS = {}
 
+class ChatUser(BackboneModel):
     guid     = Field(default=lambda:str(uuid.uuid4()))
     screenName = Field(default='Anonymous')
 
-    def save(self, *args, **kwargs):
-        self.USERS.append(self)
-        super(ChatUser, self).save(*args, **kwargs)
-
-    def destroy(self, *args, **kwargs):
-        self.USERS.remove(self)
-        super(ChatUser, self).destroy(*args, **kwargs)
-
     @classmethod
-    def find(cls, session, **kwargs):
+    def find(cls, **kwargs):
         guid = kwargs.get('guid')
         if guid:
-            for m in cls.USERS.values():
+            for m in USERS.values():
                 if m.guid == guid:
                     return m
             return None
-        return cls.USERS.values()
+        return USERS.values()
 
-    @classmethod
-    def handle_open(cls, session):
-        print "***** HANDLE OPEN"
-
-    @classmethod
-    def handle_close(cls, session):
-        print "***** HANDLE CLOSE"
-        del cls.USERS[session]
-
-
-@backsync()
 class ChatMessage(BackboneModel):
     MESSAGES = []
     COUNTER  = 1000
@@ -200,7 +132,7 @@ class ChatMessage(BackboneModel):
         super(ChatMessage, self).destroy(*args, **kwargs)
 
     @classmethod
-    def find(cls, session, **kwargs):
+    def find(cls, **kwargs):
         guid = kwargs.get('guid')
         if guid:
             for m in cls.MESSAGES:
@@ -212,3 +144,22 @@ class ChatMessage(BackboneModel):
 ChatMessage(message="message one").save()
 ChatMessage(message="message two").save()
 ChatMessage(message="message three").save()
+
+#
+#
+#
+@backsync.backsync('User')
+class UserHandler(backsync.BacksyncHandler):
+    model = ChatUser
+
+    def on_open(self):
+        print "Connection OPENED"
+
+    def on_close(self):
+        print "Connection CLOSED"
+        if self.session in USERS:
+            del USERS[self.session]
+
+@backsync.backsync('ChatMessage')
+class MessageHandler(backsync.BacksyncHandler):
+    model = ChatMessage

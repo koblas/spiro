@@ -11,10 +11,15 @@ Usage
 
 Looks like a Tornado app.
 
-    ./app.py --debug --port=8000
+    ./main.py --debug --port=8000
 
 Point your web browser at it:
 
+Reference Blog Posts
+--------------------
+
+   http://blog.semantics3.com/how-we-built-our-almost-distributed-web-crawler/
+   http://www.michaelnielsen.org/ddi/how-to-crawl-a-quarter-billion-webpages-in-40-hours/
 
 Techologies Used
 ----------------
@@ -22,8 +27,6 @@ Techologies Used
 * Tornado - Nonblocking Python Webserver - http://www.tornadoweb.org/
 * Bootstrap - Pretty CSS - http://twitter.github.com/bootstrap/
 * Backbone - JavaScript MVC - http://documentcloud.github.com/backbone/
-* Backbone IO - Model/Collection Updates - http://alogicalparadox.com/backbone.iobind/
-* Socket.IO - Transport - http://socket.io/
-* Tornadio2 - Tornado connector to Socket.IO - https://github.com/MrJoes/tornadio2
+* Distal - Backbone Views - https://github.com/koblas/distal
 * Blinker - PubSub Signals - http://discorporate.us/projects/Blinker/
 * MongoDB / Riak - KV NoSQL Database

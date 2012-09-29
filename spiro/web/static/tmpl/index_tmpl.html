@@ -1,0 +1,11 @@
+<h2>Home Template</h2>
+<form id="crawl">
+  <div class="input-append">
+    <input class="span2" id="" size="16" type="text"><button class="btn" type="button">Crawl</button>
+  </div>
+</form>
+
+<h3>Log Information</h3>
+{{#collection App.data.logentries id="logentries" class="" tagName="ul" }}
+  <li>{{get message }}</li>
+{{/collection }}

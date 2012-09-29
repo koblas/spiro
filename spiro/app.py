@@ -16,9 +16,7 @@ define("prefork", default=False, help="pre-fork across all CPUs", type=bool)
 define("port", default=9000, help="run on the given port", type=int)
 define("bootstrap", default=False, help="Run the bootstrap model commands")
 
-#from spiro.web import MainHandler, ChatHandler, BacksyncChannel, BacksyncRouter
-from spiro.web import MainHandler, ChatHandler, BacksyncChannel
-from spiro.backsync import BacksyncRouter
+from spiro.web import MainHandler, DataHandler
 from spiro.queue import SimpleQueue
 from spiro.pipeline import Pipeline
 from spiro.task import Task
@@ -31,12 +29,8 @@ class Application(tornado.web.Application):
     def __init__(self, work_queue):
         handlers = [
             (r"/", MainHandler),
-            (r"/chatty", ChatHandler)
+            (r"/data/(.+)", DataHandler),
         ]
-
-        #ChannelRouter.apply_routes(handlers)
-        #BacksyncRouter.apply_routes(handlers)
-        BacksyncRouter.apply_routes(handlers)
 
         app_settings = dict(
             debug=options.debug,
@@ -48,8 +42,6 @@ class Application(tornado.web.Application):
 
         super(Application, self).__init__(handlers, **app_settings)
 
-        #self.channel = ClientChannel
-        self.channel = BacksyncChannel
         self.ioloop  = tornado.ioloop.IOLoop.instance()
         self.ioloop.add_timeout(timedelta(seconds=1), self.ping)
 

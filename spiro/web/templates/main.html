@@ -2,27 +2,14 @@
 
 {% block title %}Home Page{% end %}
 
-{% block content %}
+{% block body %}
 
-<div id="TaskWrapper"></div>
-<h3>Log Events</h3>
-<div id="LogEventWrapper"></div>
-
-<script type="text/template" id="event-item-template">
-  <div>{{! datetime }}: {{! msg }}</div>
-</script>
-
-<script type="text/template" id="item-template">
-</script>
-
-<script type="text/template" id="form-template">
-    <form id="TaskInput" method="POST" action="{{ request.path }}">
-        URL: <input type="text" name="url"/>
-        <input id="add" type="submit"/>
-    </form>
-</script>
-
-<script src="/static/app/application.js"></script>
-<script src="/static/app/log_event.js"></script>
+  <div id="main_content"></div>
+  <!-- Application source -->
+  {% if production %}
+    <script data-main="/static/js/built.js" src="/static/js/vendor/require.js"></script>
+  {% else %}
+    <script data-main="/static/js/app/config" src="/static/js/vendor/require.js"></script>
+  {% end %}
 
 {% end %}

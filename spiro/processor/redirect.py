@@ -21,6 +21,6 @@ class RedirectExtraction(Step):
             if location.find('://') == -1:
                 location = urlparse.urljoin(task.request.url, location)
 
-            self.add_extracted_url(task.response, location)
+            task.links.append(location)
 
         callback((Step.CONTINUE, task))

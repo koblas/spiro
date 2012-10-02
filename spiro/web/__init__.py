@@ -1,1 +1,1 @@
-from .main import MainHandler, DataHandler
+import spiro.web.main

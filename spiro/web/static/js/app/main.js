@@ -16,12 +16,14 @@ require([
   "vendor/bootstrap-datepicker",
   "vendor/backbone.queryparams",
   "vendor/jquery.tokeninput",
-  "vendor/jquery.uploadify-3.1.min",
+  "vendor/jquery.toggle.buttons",
   "vendor/jquery.cookie",
   // REVIST - "vendor/jquery.drag-drop.plugin",
   "vendor/backbone-filtered-collection",
 
   "handlers/index",
+  "handlers/queue",
+  "views/crawl_state",
   // "handlers/collection_list",
   // "handlers/item_list",
   // "handlers/finish_reg",
@@ -40,6 +42,8 @@ function (app, $, _, Backbone, Models) {
     window.App = app;
 
     app.data = { };
+
+    app.CrawlStateView = require("views/crawl_state");
 
     // Defining the application router, you can attach sub routers here.
     var AppView = Backbone.Distal.LayoutView.extend({
@@ -92,7 +96,13 @@ function (app, $, _, Backbone, Models) {
     //
 
     app.events.on("startup", function() {
-        app.data.logentries = new Models.LogEntries.Collection();
+        app.data.crawlerstate = new Models.CrawlerState.Model();
+        app.data.crawlerstate.fetch({ async: false })
+
+        app.data.queue = new Models.CrawlQueue.Collection();
+        app.data.queue.fetch()
+
+        app.data.logentries   = new Models.LogEntries.Collection();
         
         app.data.logentries.token = '';
 
@@ -110,7 +120,7 @@ function (app, $, _, Backbone, Models) {
                     collection.token = token || collection.token;
                 }
             })
-        }, 1000);
+        }, 5000);
     });
 
     // Treat the jQuery ready function as the entry point to the application.

@@ -56,6 +56,9 @@ require.config({
         "vendor/jquery.cookie": {
             deps: ['jquery']
         },
+        "vendor/jquery.toggle.buttons": {
+            deps: ['jquery']
+        },
         "vendor/jquery.uploadify-3.1.min": {
             deps: ['jquery']
         },

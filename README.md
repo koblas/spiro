@@ -21,6 +21,12 @@ Reference Blog Posts
    http://blog.semantics3.com/how-we-built-our-almost-distributed-web-crawler/
    http://www.michaelnielsen.org/ddi/how-to-crawl-a-quarter-billion-webpages-in-40-hours/
 
+Other References
+----------------
+
+   http://dev.gbif.org/wiki/display/DEV/ZooKeeper+structure
+   http://blog.marc-seeger.de/assets/papers/thesis_seeger-building_blocks_of_a_scalable_webcrawler.pdf
+
 Techologies Used
 ----------------
 
@@ -30,3 +36,4 @@ Techologies Used
 * Distal - Backbone Views - https://github.com/koblas/distal
 * Blinker - PubSub Signals - http://discorporate.us/projects/Blinker/
 * MongoDB / Riak - KV NoSQL Database
+

@@ -37,7 +37,16 @@ define([
     //
     //
     var Models = {
-        LogEntries  : simpleMC('LogEntries')
+        LogEntries   : simpleMC('LogEntries'),
+        CrawlQueue   : simpleMC('Queue')
+    };
+    
+    Models.CrawlerState = {
+        Model : Backbone.Model.extend({
+            url : function() {
+                return '/data/CrawlerState/1';
+            },
+        })
     };
 
     return Models;

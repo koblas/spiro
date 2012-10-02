@@ -5,6 +5,7 @@ class Task(object):
         self.links    = []
         self.request  = None
         self.response = None
+        self.content_type = None
 
     def content_from_response(self):
         """
@@ -16,6 +17,9 @@ class Task(object):
         self.content_charset = ""
             
         self.content_type = self.response.headers.get('content-type', 'text/plain')
+
+        if not self.response.body:
+            return None
 
         if self.content_type.find(';') == -1:
             self.content_charset = ''
@@ -36,3 +40,6 @@ class Task(object):
             self.content_charset = 'utf-8'
 
         return self.response.body.decode(self.content_charset, errors='ignore')
+
+    def __repr__(self):
+        return "<Task %s>" % self.url

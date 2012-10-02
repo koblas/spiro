@@ -8,18 +8,19 @@ class HtmlLinkExtractor(Step):
         pass
 
     def process(self, task, callback=None, **kwargs):
-        url = task.request.url
+        if task.response.body:
+            url = task.request.url
 
-        q = pq(task.response.body)
-        for link in q('a'):
-            href = link.attrib.get('href', None)
-            if not href:
-                continue
+            q = pq(task.response.body)
+            for link in q('a'):
+                href = link.attrib.get('href', None)
+                if not href:
+                    continue
 
-            full_url = urljoin(url, href)
-            full_url = full_url.split('#', 1)[0]
+                full_url = urljoin(url, href)
+                full_url = full_url.split('#', 1)[0]
 
-            if full_url.startswith('http://') or full_url.startswith('https://'):
-                task.links.append(full_url)
+                if full_url.startswith('http://') or full_url.startswith('https://'):
+                    task.links.append(full_url)
 
         callback((Step.CONTINUE, task))

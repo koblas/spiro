@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import logging
-from spiro.signal import client_message
 import os
 import settings
 from datetime import timedelta
@@ -16,8 +15,9 @@ define("prefork", default=False, help="pre-fork across all CPUs", type=bool)
 define("port", default=9000, help="run on the given port", type=int)
 define("bootstrap", default=False, help="Run the bootstrap model commands")
 
-from spiro.web import MainHandler, DataHandler
-from spiro.queue import SimpleQueue
+from spiro.web.route import route
+from spiro.web.main import RedirectHandler
+from spiro.queue import SpiderQueue
 from spiro.pipeline import Pipeline
 from spiro.task import Task
 from spiro import models
@@ -27,10 +27,8 @@ from spiro import models
 #
 class Application(tornado.web.Application):
     def __init__(self, work_queue):
-        handlers = [
-            (r"/", MainHandler),
-            (r"/data/(.+)", DataHandler),
-        ]
+        if options.debug:
+            logging.getLogger().setLevel(logging.DEBUG)
 
         app_settings = dict(
             debug=options.debug,
@@ -39,8 +37,15 @@ class Application(tornado.web.Application):
         )
 
         self.work_queue = work_queue
+        self.crawler_running = True
 
-        super(Application, self).__init__(handlers, **app_settings)
+        routes = route.get_routes()
+        # Hast to be the last route...
+        routes.extend([
+                    (r"/(.+)", RedirectHandler),
+                ])
+
+        super(Application, self).__init__(routes, **app_settings)
 
         self.ioloop  = tornado.ioloop.IOLoop.instance()
         self.ioloop.add_timeout(timedelta(seconds=1), self.ping)
@@ -63,31 +68,39 @@ class Worker(object):
         self.ioloop   = io_loop or tornado.ioloop.IOLoop.instance()
         self.queue    = queue
         self.pipeline = Pipeline(settings.PIPELINE, settings=settings, work_queue=queue)
+        self.running_fetchers  = 0
+        self.total_fetch_count = 0
         self.loop()
 
     @gen.engine
     def loop(self):
-        if self.queue.empty():
+        if not self.queue or not self.app.crawler_running:
             self.ioloop.add_timeout(timedelta(seconds=1), self.loop)
             return
 
-        url = self.queue.pop()
+        url, closure = self.queue.pop()
         if url:
-            print "URL = ", url
+            logging.debug("Staring task url=%s" % url)
+
             task = Task(url)
 
-            yield gen.Task(self.pipeline.process, task)
+            self.running_fetchers  += 1
 
-            #self.app.channel.send("logevents:create", models.LogEvent("Crawled %s" % url).serialize())
+            yield gen.Task(self.pipeline.process, task)
+            closure(True)
+
+            self.total_fetch_count += 1
+            self.running_fetchers  -= 1
 
             models.LogEvent("Crawled %s" % url).save()
+            logging.debug("Finished task url=%s" % url)
 
         self.ioloop.add_callback(self.loop)
 
 def main():
     tornado.options.parse_command_line()
 
-    queue    = SimpleQueue()
+    queue    = SpiderQueue()
     app      = Application(queue)
     worker   = Worker(app, settings, queue)
 

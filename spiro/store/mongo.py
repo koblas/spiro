@@ -19,7 +19,7 @@ class MongoStore(Store):
         data = {
             'url'          : task.response.request.url,
             'code'         : task.response.code,
-            'body'         : task.content,
+            'body'         : getattr(task, 'content', None),
             'headers'      : task.response.headers,
             'content-type' : task.content_type,
             'crawl_time'   : datetime.now(),

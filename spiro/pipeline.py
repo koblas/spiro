@@ -22,6 +22,8 @@ class Pipeline(object):
 
         nargs = args
         for item in self.steps:
+            logging.debug("Running %s %r", item.__class__.__name__, args[0])
+
             yvalue = yield gen.Task(item.process, *nargs, **kwargs)
 
             # print "Call = %r   Val = %r" % (item, yvalue)

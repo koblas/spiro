@@ -5,7 +5,9 @@ class SimpleQueue(object):
         self.queue = deque()
 
     def pop(self):
-        return self.queue.popleft()
+        def callback(success):
+            pass
+        return self.queue.popleft(), callback
 
     def add(self, url):
         self.queue.append(url)

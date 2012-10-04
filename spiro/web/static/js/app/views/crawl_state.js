@@ -23,11 +23,11 @@ function (app, $, _, Backbone, Models) {
 
         post_render: function() {
             this.$('#crawler_running :checkbox').attr('checked', 
-                                    app.data.crawlerstate.get('crawler_running'));
+                                    app.data.settings.get('crawler_running'));
 
             this.$('#crawler_running').toggleButtons({
                 onChange: function($el, state, e) {
-                    app.data.crawlerstate.save({
+                    app.data.settings.save({
                         crawler_running: state
                     });
                 },

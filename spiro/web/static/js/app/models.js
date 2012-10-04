@@ -41,10 +41,20 @@ define([
         CrawlQueue   : simpleMC('Queue')
     };
     
+    /*
     Models.CrawlerState = {
         Model : Backbone.Model.extend({
             url : function() {
                 return '/data/CrawlerState/1';
+            },
+        })
+    };
+    */
+
+    Models.Settings = {
+        Model : Backbone.Model.extend({
+            url : function() {
+                return '/data/Settings/1';
             },
         })
     };

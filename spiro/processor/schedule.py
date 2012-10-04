@@ -20,12 +20,12 @@ class ScheduleUrls(Step):
                 try:
                     p = urlparse.urlparse(url)
 
+                    try:
+                        host = p.netloc
+                        host, port = host.split(':')
+                    except:
+                        pass
                     if self.restrict:
-                        try:
-                            host = p.netloc
-                            host, port = host.split(':')
-                        except:
-                            pass
                         if host not in self.restrict:
                             continue
 

@@ -1,3 +1,4 @@
+import urlparse
 
 class Task(object):
     def __init__(self, url=None):
@@ -6,6 +7,35 @@ class Task(object):
         self.request  = None
         self.response = None
         self.content_type = None
+        self._parsed  = None
+
+    @property
+    def parsed_url(self):
+        if not self._parsed:
+            self._parsed = urlparse.urlparse(self.url)
+        return self._parsed
+
+    @property
+    def url_scheme(self):
+        return self.parsed_url.scheme
+
+    @property
+    def url_path(self):
+        p = self.parsed_url.path
+        if p == '':
+            return '/'
+        return p
+
+    @property
+    def url_host(self):
+        p = self.parsed_url
+
+        try:
+            host = p.netloc
+            host, port = host.split(':')
+            return host
+        except:
+            return p.netloc
 
     def content_from_response(self):
         """

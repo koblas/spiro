@@ -97,8 +97,10 @@ function (app, $, _, Backbone, Models) {
     //
 
     app.events.on("startup", function() {
-        app.data.crawlerstate = new Models.CrawlerState.Model();
-        app.data.crawlerstate.fetch({ async: false })
+        // app.data.crawlerstate = new Models.CrawlerState.Model();
+        // app.data.crawlerstate.fetch({ async: false });
+        app.data.settings = new Models.Settings.Model();
+        app.data.settings.fetch({ async: false });  // TODO - really async?
 
         app.data.queue      = new Models.CrawlQueue.Collection();
         app.data.logentries = new Models.LogEntries.Collection();

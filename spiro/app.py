@@ -37,7 +37,8 @@ class Application(tornado.web.Application):
         )
 
         self.work_queue = work_queue
-        self.crawler_running = True
+        self.user_settings = models.Settings.singleton()
+        work_queue.default_delay = self.user_settings.crawl_delay
 
         routes = route.get_routes()
         # Hast to be the last route...
@@ -74,7 +75,7 @@ class Worker(object):
 
     @gen.engine
     def loop(self):
-        if not self.queue or not self.app.crawler_running:
+        if not self.queue or not self.app.user_settings.crawler_running:
             self.ioloop.add_timeout(timedelta(seconds=1), self.loop)
             return
 

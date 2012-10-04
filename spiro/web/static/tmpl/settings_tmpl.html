@@ -1,6 +1,38 @@
 
 <h2>Settings</h2>
 
+<!--
 <li>Allowed Domains</li>
-<li>Default Page Delay</li>
-<li>Max Fetchers</li>
+-->
+
+<form class="form-horizontal">
+  <div class="control-group">
+    <label class="control-label" for="crawl_delay">Default Page Delay</label>
+    <div class="controls">
+      <input type="text" id="crawl_delay" value="{{ get crawl_delay }}" placeholder="In Seconds">
+    </div>
+  </div>
+
+  <div class="control-group">
+    <label class="control-label" for="max_fetchers">Max Concurent Fetchers</label>
+    <div class="controls">
+      <input type="text" id="max_fetchers" value="{{ get max_fetchers }}" placeholder="">
+    </div>
+  </div>
+
+  <div class="control-group">
+    <div class="controls">
+      <label class="checkbox" for="follow_links">
+        <input type="checkbox" id="follow_links" {{#if follow_links }}checked="checked"{{/if}}>
+        Follow Links
+      </label>
+    </div>
+  </div>
+
+  <div class="control-group">
+    <div class="controls">
+      <button type="submit" class="btn">Save</button>
+    </div>
+  </div>
+</form>
+

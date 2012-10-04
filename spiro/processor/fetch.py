@@ -22,7 +22,7 @@ class Fetch(Step):
         else:
             blen = 0
 
-        logging.debug("Fetched code=%d len=%d url=%s" % (task.response.code, 0, task.url))
+        logging.debug("Fetched code=%d len=%d url=%s" % (task.response.code, blen, task.url))
 
         if task.response.code == 200:
             task.content = task.content_from_response()

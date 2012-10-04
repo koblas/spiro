@@ -1,15 +1,52 @@
-import urlparse
+from tornado import gen
+from spiro.task import Task
 from .base import Step
+from .fetch import Fetch
+from .store import StoreResponse
+from spiro.util.robotparser import RobotParser
+from spiro.util.cache import LRUCache
 
 """
-Instead of handling 30X redirects as a HTTP case, we're handling them in the
-response pipeline.
+Process a robots.txt file - and actually use it to control what's fetched
 """
 
 class RobotCheck(Step):
+    cache = LRUCache(1000)
+
     def __init__(self, settings, **kwargs):
         """Initialzation"""
-        pass
+        self.settings = settings
+        self.fetch    = Fetch(settings)
+        self.store    = StoreResponse(settings)
 
+    @gen.engine
     def process(self, task, callback=None, **kwargs):
-        callback((Step.CONTINUE, task))
+        url = "%s://%s/robots.txt" % (task.url_scheme, task.url_host)
+
+        if url in self.cache:
+            matcher = self.cache[url]
+        else:
+            matcher = self.cache[url] = yield gen.Task(self.build_matcher, url)
+            # TODO - Get Crawl Delay ``matcher.get_crawl_delay()``
+            
+        if matcher.is_allowed_path(task.url_path):
+            callback((Step.CONTINUE, task))
+
+        callback((Step.STOP, task))
+
+    @gen.engine
+    def build_matcher(self, url, callback):
+        task   = Task(url)
+        parser = RobotParser(useragent=self.settings.USER_AGENT)
+
+        v, t = yield gen.Task(self.fetch.process, task)
+
+        # Save the robots.txt
+        yield gen.Task(self.store.process, task)
+
+        if task.content:
+            parser.parse(task.content)
+
+        matcher = parser.matcher(self.settings.ROBOT_NAME)
+
+        callback(matcher)

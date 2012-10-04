@@ -1,4 +1,4 @@
-import urllib, urllib2, re, urlparse
+import urllib, re, urlparse
 
 __all__ = ['RobotParser']
 
@@ -66,7 +66,11 @@ class RuleSet(object) :
 
     def is_allowed(self, url) :
         scheme, host, path, parameters, query, fragment = urlparse.urlparse(url)
+        if path == '':
+            path = '/'
         url = urlparse.urlunparse(("", "", path, parameters, query, fragment))
+
+        print "URL = ", url
 
         return self.is_allowed_path(_unquote_path(url)) 
 
@@ -106,9 +110,11 @@ class DefaultRuleSet(RuleSet) :
 class RobotParser(object) :
     DEFAULT = DefaultRuleSet()
 
-    def __init__(self, useragent = None, content = None, extra_rules=None) :
+    def __init__(self, useragent = None, robotname=None, content = None, extra_rules=None) :
+        # TODO - Some Docs
         self.source_url = None
         self.user_agent = useragent
+        self.robot_name = robotname or useragent
         self._sitemap   = None
         self._rulesets  = []
 
@@ -305,6 +311,30 @@ Allow: /*
     for u in turl :
         print "%s => %s" % (u, m.is_allowed(u))
 
+def test3():
+    content = """
+User-agent: *
+Disallow: /
+"""
+    rp = RobotParser(useragent="Spiro", content=content)
+    m = rp.matcher()
+
+    turl = [
+        'http://www.foobar.com',
+        '/',
+        '/public/stuff/here',
+        '/thisis_print_page.html',
+        '/tag/gossip',
+        '/tag/gossip',
+    ]
+
+    for u in turl :
+        print "%s => %s" % (u, m.is_allowed(u))
+
 if __name__ == '__main__' :
+    print " -- TEST1"
     test1()
+    print " -- TEST2"
     test2()
+    print " -- TEST3"
+    test3()

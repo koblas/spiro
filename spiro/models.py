@@ -1,5 +1,6 @@
 import logging
 import uuid
+from redisco import models
 import time, hashlib
 from datetime import datetime
 #from blinker import Signal
@@ -89,3 +90,40 @@ class LogEvent(BackboneModel):
 class SeedTask(BackboneModel):
     def set(self, url=None, **kwargs):
         self.url = url
+
+#
+#  Currently stored in Redis, not sure that's the best idea, but for now.
+#
+class DomainRestriction(models.Model):
+    domain = models.Attribute(required=True)
+
+class Settings(models.Model):
+    crawl_delay     = models.FloatField(default=1.0)
+    max_fetchers    = models.IntegerField(default=100)
+    follow_links    = models.BooleanField(default=True)
+    crawler_running = models.BooleanField(default=True)
+
+    def _initialize_id(self):
+        self.id = 1
+
+    OBJS = {}
+
+    @classmethod
+    def singleton(cls, id=1):
+        """
+          There should only be one settings object in the system, this makes
+          it easier to read/write it without worrying about who's doing what
+        """
+        id = int(id)
+
+        if id in cls.OBJS:
+            return cls.OBJS[id]
+
+        obj = cls.objects.get_by_id(id)
+
+        if obj is None:
+            obj = cls()
+            obj.save()
+        cls.OBJS[id] = obj
+
+        return obj

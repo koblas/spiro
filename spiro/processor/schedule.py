@@ -10,6 +10,7 @@ response pipeline.
 class ScheduleUrls(Step):
     def __init__(self, settings, work_queue=None, **kwargs):
         """Initialzation"""
+        self.restrict   = getattr(settings, 'DOMAIN_RESTRICT', None)
         self.work_queue = work_queue
         self.seen_set   = set()
 
@@ -19,7 +20,16 @@ class ScheduleUrls(Step):
                 try:
                     p = urlparse.urlparse(url)
 
-                    self.work_queue.add(p.netloc, url)
+                    if self.restrict:
+                        try:
+                            host = p.netloc
+                            host, port = host.split(':')
+                        except:
+                            pass
+                        if host not in self.restrict:
+                            continue
+
+                    self.work_queue.add(host, url)
                     self.seen_set.add(url)
                 except Exception as e:
                     logging.info("Unable to add URL:", e)

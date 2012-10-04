@@ -6,8 +6,9 @@ class SpiderBucket(deque):
         self._processing = 0
         self._concurent_crawler = 1
 
-        self._delay = timedelta(seconds=10)
-        self._time = datetime.now()
+        self._delay   = timedelta(seconds=10)
+        self._time    = datetime.now()
+        self._counter = 0
 
         super(SpiderBucket, self).__init__(*args, **kwargs)
 
@@ -24,6 +25,7 @@ class SpiderBucket(deque):
 
         self._time = timenow + self._delay
 
+        self._counter    += 1
         self._processing += 1
 
         return self.popleft(), self._callback
@@ -60,7 +62,7 @@ class SpiderQueue(object):
 
             # No need to process an empty bucket
             retval = bucket.pop(timenow=tnow)
-            if retval:
+            if retval is not None:
                 self._length -= 1
                 return retval
 
@@ -68,4 +70,4 @@ class SpiderQueue(object):
 
     def __iter__(self):
         for bid, bucket in self._buckets.iteritems():
-            yield bid, len(bucket)
+            yield bid, len(bucket), bucket._counter

@@ -78,7 +78,12 @@ class Worker(object):
             self.ioloop.add_timeout(timedelta(seconds=1), self.loop)
             return
 
-        url, closure = self.queue.pop()
+        try:
+            url, closure = self.queue.pop()
+        except Exception as e:
+            self.ioloop.add_timeout(timedelta(seconds=1), self.loop)
+            return
+
         if url:
             logging.debug("Staring task url=%s" % url)
 

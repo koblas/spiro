@@ -23,6 +23,7 @@ require([
 
   "handlers/index",
   "handlers/queue",
+  "handlers/settings",
   "views/crawl_state",
   // "handlers/collection_list",
   // "handlers/item_list",
@@ -99,14 +100,14 @@ function (app, $, _, Backbone, Models) {
         app.data.crawlerstate = new Models.CrawlerState.Model();
         app.data.crawlerstate.fetch({ async: false })
 
-        app.data.queue = new Models.CrawlQueue.Collection();
-        app.data.queue.fetch()
-
-        app.data.logentries   = new Models.LogEntries.Collection();
+        app.data.queue      = new Models.CrawlQueue.Collection();
+        app.data.logentries = new Models.LogEntries.Collection();
         
         app.data.logentries.token = '';
 
         setInterval(function() {
+            app.data.queue.fetch()
+
             app.data.logentries.fetch({
                 data: {
                     token: app.data.logentries.token

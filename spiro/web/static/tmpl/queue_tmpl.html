@@ -1,5 +1,10 @@
 <h2>Queue</h2>
 
-{{#collection this.queues id="items" class="" tagName="table" }}
-  <tr><td>{{ get count }}</td><td>{{get host }}</td></tr>
-{{/collection}}
+<table class="table table-striped">
+  <thead>
+    <tr><th>Count</th><th>Site</th><th>Crawled</th></tr>
+  </thead>
+  {{#collection this.queues tagName="tbody" }}
+    <tr><td>{{ get count }}</td><td>{{get host }}</td><td>{{ get total }}</td></tr>
+  {{/collection}}
+</table>

@@ -24,6 +24,9 @@ class CrawlDataHandler(tornado.web.RequestHandler):
         url = self.get_argument('url')
 
         try:
+            if not url.startswith('http://'):
+                url = "http://%s" % url
+
             p = urlparse.urlparse(url)
 
             self.application.work_queue.add(p.netloc, url)
@@ -72,8 +75,9 @@ class QueueDataHandler(tornado.web.RequestHandler):
         items = []
         for item in sorted(self.application.work_queue, key=self._key):
             items.append({
-                'host' : item[0],
+                'host'  : item[0],
                 'count' : item[1],
+                'total' : item[2],
             })
         return self.finish(json.dumps(items))
 

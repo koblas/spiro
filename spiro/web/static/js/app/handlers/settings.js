@@ -18,19 +18,15 @@ function (app, $, _, Backbone, Models) {
     var Handler = app.module();
 
     var View = Backbone.Distal.View.extend({
-        templateName: 'queue_tmpl',
+        templateName: 'settings_tmpl',
 
         events: {
         },
 
         initialize: function() {
             $('#leftbar .nav li').removeClass('active');
-            $('#leftbar .nav #leftbar_queues').addClass('active');
+            $('#leftbar .nav #leftbar_settings').addClass('active');
         },
-
-        queues: function() {
-            return app.data.queue;
-        }
     });
 
     Handler.Controller = function () {
@@ -40,7 +36,7 @@ function (app, $, _, Backbone, Models) {
         layout.main.show(new View());
     };
 
-    app.router.route("queue", "queue", Handler.Controller);
+    app.router.route("settings", "settings", Handler.Controller);
 
     return Handler;
 });

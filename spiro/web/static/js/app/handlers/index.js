@@ -26,6 +26,11 @@ function (app, $, _, Backbone, Models) {
             'click #crawl button' : 'on_submit'
         },
 
+        initialize: function() {
+            $('#leftbar .nav li').removeClass('active');
+            $('#leftbar .nav #leftbar_home').addClass('active');
+        },
+
         on_submit: function(evt) {
             var url = $('#crawl input').val();
 

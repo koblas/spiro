@@ -19,7 +19,7 @@ from spiro.web.route import route
 from spiro.web.main import RedirectHandler
 from spiro.queue import SpiderQueue
 from spiro.pipeline import Pipeline
-from spiro.task import Task
+from spiro import redis
 from spiro import models
 
 #
@@ -39,6 +39,7 @@ class Application(tornado.web.Application):
         self.work_queue = work_queue
         self.user_settings = models.Settings.singleton()
         work_queue.default_delay = self.user_settings.crawl_delay
+        self.redis = redis.Client()
 
         routes = route.get_routes()
         # Hast to be the last route...
@@ -68,7 +69,7 @@ class Worker(object):
         self.app      = app
         self.ioloop   = io_loop or tornado.ioloop.IOLoop.instance()
         self.queue    = queue
-        self.pipeline = Pipeline(settings.PIPELINE, settings=settings, work_queue=queue)
+        self.pipeline = Pipeline(settings.PIPELINE, settings=settings, work_queue=queue, user_settings=app.user_settings)
         self.running_fetchers  = 0
         self.total_fetch_count = 0
         self.loop()
@@ -80,15 +81,13 @@ class Worker(object):
             return
 
         try:
-            url, closure = self.queue.pop()
+            task, closure = self.queue.pop()
         except Exception as e:
             self.ioloop.add_timeout(timedelta(seconds=1), self.loop)
             return
 
-        if url:
-            logging.debug("Staring task url=%s" % url)
-
-            task = Task(url)
+        if task:
+            logging.debug("Staring task url=%s" % task.url)
 
             self.running_fetchers  += 1
 
@@ -98,8 +97,8 @@ class Worker(object):
             self.total_fetch_count += 1
             self.running_fetchers  -= 1
 
-            models.LogEvent("Crawled %s" % url).save()
-            logging.debug("Finished task url=%s" % url)
+            models.LogEvent("Crawled %d %s" % (task.response.code, task.url)).save()
+            logging.debug("Finished task url=%s" % task.url)
 
         self.ioloop.add_callback(self.loop)
 
@@ -111,12 +110,6 @@ def main():
     worker   = Worker(app, settings, queue)
 
     http_server = tornado.httpserver.HTTPServer(app)
-
-    def add_item(sender, instance=None, **kwargs):
-        logging.debug("ADDING TO QUEUE %s " % instance.url)
-        queue.add(instance.url)
-
-    # models.signals.post_save.connect(add_item, sender=models.SeedTask)
 
     print "Starting tornado on port", options.port
     if options.prefork:

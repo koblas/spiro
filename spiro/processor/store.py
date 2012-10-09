@@ -24,7 +24,7 @@ class NeedFetch(Step):
         self.store = get_store(settings)
 
     def process(self, task, callback=None, **kwargs):
-        if self.store.has(task.url):
+        if not task.force and self.store.has(task.url):
             action = Step.STOP
         else:
             action = Step.CONTINUE

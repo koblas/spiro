@@ -3,6 +3,7 @@ import json
 import urlparse
 import time
 from spiro import signals
+from spiro.task import Task
 from spiro.models import LogEvent, Settings
 from spiro.web.route import route
 
@@ -30,9 +31,11 @@ class CrawlDataHandler(tornado.web.RequestHandler):
             if not url.startswith('http://'):
                 url = "http://%s" % url
 
-            p = urlparse.urlparse(url)
+            task = Task(url, force=True)
 
-            self.application.work_queue.add(p.netloc, url)
+            self.application.work_queue.add(task)
+
+            self.application.user_settings.domain_restriction.add(task.url_host)
         
             LogEvent("Added %s" % url).save()
         except Exception as e:

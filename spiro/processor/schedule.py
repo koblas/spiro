@@ -1,5 +1,6 @@
 import logging
 import urlparse
+from spiro.task import Task
 from .base import Step
 
 """
@@ -8,13 +9,21 @@ response pipeline.
 """
 
 class ScheduleUrls(Step):
-    def __init__(self, settings, work_queue=None, **kwargs):
+    def __init__(self, settings, work_queue=None, user_settings=None, **kwargs):
         """Initialzation"""
-        self.restrict   = getattr(settings, 'DOMAIN_RESTRICT', None)
-        self.work_queue = work_queue
-        self.seen_set   = set()
+        self.restrict      = getattr(settings, 'DOMAIN_RESTRICT', None)
+        self.work_queue    = work_queue
+        self.settings      = settings
+        self.user_settings = user_settings
+        self.seen_set      = set()
 
     def process(self, task, callback=None, **kwargs):
+        # Link following turned off...
+
+        if not self.user_settings.follow_links:
+            callback((Step.CONTINUE, task))
+            return
+
         for url in task.links:
             if url not in self.seen_set:
                 try:
@@ -25,11 +34,18 @@ class ScheduleUrls(Step):
                         host, port = host.split(':')
                     except:
                         pass
-                    if self.restrict:
-                        if host not in self.restrict:
-                            continue
 
-                    self.work_queue.add(host, url)
+                    #
+                    #  In INTERNET mode only restrict if there is a restriction set in place, otherwise 
+                    #  you can crawl whatever.
+                    #
+                    if self.settings.INTERNET:
+                        if self.user_settings.domain_restriction and host not in self.user_settings.domain_restriction:
+                            continue
+                    elif host not in self.user_settings.domain_restriction:
+                        continue
+
+                    self.work_queue.add(Task(url))
                     self.seen_set.add(url)
                 except Exception as e:
                     logging.info("Unable to add URL:", e)

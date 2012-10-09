@@ -1,9 +1,10 @@
 import urlparse
 
 class Task(object):
-    def __init__(self, url=None):
+    def __init__(self, url=None, force=False):
         self.url      = url
         self.links    = []
+        self.force    = force
         self.request  = None
         self.response = None
         self.content_type = None

@@ -16,10 +16,15 @@ class MongoStore(Store):
         self.bucket.create_index('url', unique=True)
 
     def update(self, task):
+        if task.response is None:
+            logging.info("Task url=%s has no response" % (task.url))
+            return
+        
         data = {
             'url'          : task.response.request.url,
             'code'         : task.response.code,
             'body'         : getattr(task, 'content', None),
+            'links'        : task.links,
             'headers'      : task.response.headers,
             'content-type' : task.content_type,
             'crawl_time'   : datetime.now(),

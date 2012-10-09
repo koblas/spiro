@@ -57,11 +57,11 @@ class RuleSet(object) :
 
     def is_allowed_path(self, url) :
         for type, path, regex in self._rules :
+            #print "URL=%s  type=%r  path=%r  re=%s" % (url, type, path, regex.pattern)
             if regex.match(url) :
                 return type == self.ALLOW
 
         #print "NO rule for: ", url
-        #print self
         return True
 
     def is_allowed(self, url) :
@@ -69,8 +69,6 @@ class RuleSet(object) :
         if path == '':
             path = '/'
         url = urlparse.urlunparse(("", "", path, parameters, query, fragment))
-
-        print "URL = ", url
 
         return self.is_allowed_path(_unquote_path(url)) 
 

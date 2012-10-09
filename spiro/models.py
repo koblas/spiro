@@ -94,6 +94,16 @@ class SeedTask(BackboneModel):
 #
 #  Currently stored in Redis, not sure that's the best idea, but for now.
 #
+class DomainHelper(object):
+    def __init__(self):
+        self.data = set()
+
+    def __contains__(self, val):
+        return val in self.data
+
+    def add(self, val):
+        self.data.add(val)
+
 class DomainRestriction(models.Model):
     domain = models.Attribute(required=True)
 
@@ -102,6 +112,11 @@ class Settings(models.Model):
     max_fetchers    = models.IntegerField(default=100)
     follow_links    = models.BooleanField(default=True)
     crawler_running = models.BooleanField(default=True)
+    _domain_helper  = DomainHelper()
+
+    @property
+    def domain_restriction(self):
+        return self._domain_helper
 
     def _initialize_id(self):
         self.id = 1

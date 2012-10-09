@@ -9,8 +9,8 @@ class SimpleQueue(object):
             pass
         return self.queue.popleft(), callback
 
-    def add(self, url):
-        self.queue.append(url)
+    def add(self, task):
+        self.queue.append(task)
 
     def empty(self):
         return not bool(self.queue)

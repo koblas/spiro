@@ -23,6 +23,7 @@ class RobotCheck(Step):
     def process(self, task, callback=None, **kwargs):
         url = "%s://%s/robots.txt" % (task.url_scheme, task.url_host)
 
+        print url
         if url in self.cache:
             matcher = self.cache[url]
         else:
@@ -31,6 +32,7 @@ class RobotCheck(Step):
             
         if matcher.is_allowed_path(task.url_path):
             callback((Step.CONTINUE, task))
+            return
 
         callback((Step.STOP, task))
 

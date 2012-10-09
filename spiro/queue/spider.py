@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 class SpiderBucket(deque):
     def __init__(self, parent=None, *args, **kwargs):
         self._processing = 0
-        self._concurent_crawler = 1
+        self._concurent_crawler = 2
         self._parent = parent
 
         self._delay   = None
@@ -49,10 +49,11 @@ class SpiderQueue(object):
     def __len__(self):
         return self._length
 
-    def add(self, bucket, obj):
+    def add(self, task):
+        bucket = task.url_host
         if bucket not in self._buckets:
             self._bucket_list.append(bucket)
-        self._buckets[bucket].append(obj)
+        self._buckets[bucket].append(task)
         self._length += 1
 
     def pop(self):

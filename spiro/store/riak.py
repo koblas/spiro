@@ -15,17 +15,23 @@ class RiakStore(Store):
         client = riak.RiakClient(host=host, transport_class=riak.RiakPbcTransport)
         self.bucket = client.bucket(bucket)
 
-    def update(self, response):
+    def update(self, task):
+        if task.response is None:
+            logging.info("Task url=%s has no response" % (task.url))
+            return
+
         data = {
-            'url'          : response.request.url,
-            'code'         : response.code,
-            'body'         : response.body,
-            'headers'      : response.headers,
-            'content-type' : response.headers.get('content-type'),
+            'url'          : task.response.request.url,
+            'code'         : task.response.code,
+            'body'         : getattr(task, 'content', None),
+            'links'        : task.links,
+            'headers'      : task.response.headers,
+            'content-type' : task.content_type,
             'crawl_time'   : datetime.now(),
         }
 
-        self.bucket.new(response.request.url, data).store()
+        self.bucket.new(task.response.request.url, data).store()
 
     def has(self, url):
+        # TODO - implement has()
         return True

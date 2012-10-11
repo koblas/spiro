@@ -15,7 +15,7 @@ class ScheduleUrls(Step):
         self.work_queue    = work_queue
         self.settings      = settings
         self.user_settings = user_settings
-        self.seen_set      = set()
+        self.seen_set = set()
 
     def process(self, task, callback=None, **kwargs):
         # Link following turned off...
@@ -46,7 +46,6 @@ class ScheduleUrls(Step):
                         continue
 
                     self.work_queue.add(Task(url))
-                    self.seen_set.add(url)
                 except Exception as e:
                     logging.info("Unable to add URL:", e)
 

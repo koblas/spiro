@@ -1,4 +1,5 @@
 import tornado.web
+from tornado import gen
 import json
 import urlparse
 import time
@@ -104,15 +105,18 @@ class QueueDataHandler(tornado.web.RequestHandler):
             val = val[4:]
         return val
         
+    @tornado.web.asynchronous
+    @gen.engine
     def get(self, id=None):
         items = []
-        for item in sorted(self.application.work_queue, key=self._key):
+        queue_items = yield gen.Task(self.application.work_queue.items)
+        for item in sorted(queue_items, key=self._key):
             items.append({
                 'host'  : item[0],
                 'count' : item[1],
                 'total' : item[2],
             })
-        return self.finish(json.dumps(items))
+        self.finish(json.dumps(items))
 
 def update_logs(*args, **kwargs):
     global token

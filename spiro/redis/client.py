@@ -284,7 +284,7 @@ class Client(object):
 
         if len(self.queue) == 1:
             self.connection.write(qcmd.to_bytes())
-            self.connection.read_until('\r\n', self.recv_response)
+            self.connection.read_until("\r\n", self.recv_response)
 
     def recv_response(self, orig_data):
         data = orig_data[:-2]        # remove CRLF
@@ -368,7 +368,10 @@ class Client(object):
             self.connection.write(qcmd.to_bytes())
             self.connection.read_until('\r\n', self.recv_response)
 
-        done_cmd.call(self, self.REPLY_MAP[done_cmd.cmd](response) if done_cmd.cmd in self.REPLY_MAP else response)
+        done_cmd.call(self, self.REPLY_MAP[done_cmd.cmd](response) if (
+                            done_cmd.cmd in self.REPLY_MAP and 
+                            not isinstance(response, ResponseError)
+                        ) else response)
 
     def remove_subscription(self, r, channel):
         if r:

@@ -1,5 +1,6 @@
 from collections import deque
 
+# TODO - Fix responses, add seen_set
 class SimpleQueue(object):
     def __init__(self):
         self.queue = deque()

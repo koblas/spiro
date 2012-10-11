@@ -22,7 +22,12 @@ class Fetch(Step):
         else:
             blen = 0
 
-        logging.debug("Fetched code=%d len=%d url=%s" % (task.response.code, blen, task.url))
+        try:
+            raw_len = int(task.response.headers.get('content-length', blen))
+        except:
+            raw_len = blen
+
+        logging.debug("Fetched code=%d len_raw=%d len=%d url=%s" % (task.response.code, raw_len, blen, task.url))
 
         if task.response.code == 200:
             task.content = task.content_from_response()

@@ -17,7 +17,7 @@ define("bootstrap", default=False, help="Run the bootstrap model commands")
 
 from spiro.web.route import route
 from spiro.web.main import RedirectHandler
-from spiro.queue import SpiderQueue
+from spiro.queue import SpiderQueue, RedisQueue
 from spiro.pipeline import Pipeline
 from spiro import redis
 from spiro import models
@@ -26,7 +26,7 @@ from spiro import models
 #
 #
 class Application(tornado.web.Application):
-    def __init__(self, work_queue):
+    def __init__(self):
         if options.debug:
             logging.getLogger().setLevel(logging.DEBUG)
 
@@ -36,10 +36,11 @@ class Application(tornado.web.Application):
             static_path=os.path.join(os.path.dirname(__file__), "web", "static"),
         )
 
-        self.work_queue = work_queue
         self.user_settings = models.Settings.singleton()
-        work_queue.default_delay = self.user_settings.crawl_delay
         self.redis = redis.Client()
+        self.redis.connect()
+        self.work_queue = RedisQueue(self.redis)
+        self.work_queue.default_delay = self.user_settings.crawl_delay
 
         routes = route.get_routes()
         # Hast to be the last route...
@@ -50,19 +51,6 @@ class Application(tornado.web.Application):
         super(Application, self).__init__(routes, **app_settings)
 
         self.ioloop  = tornado.ioloop.IOLoop.instance()
-        self.ioloop.add_timeout(timedelta(seconds=1), self.ping)
-
-    def ping(self):
-        #ClientChannel.emit_log_event("HI DAVE")
-
-        import time, hashlib
-        eid = hashlib.md5("%f" % time.time()).hexdigest()
-
-        # self.channel.send("logevents:create", {'id': eid, 'msg': 'hi dave! - %d' % time.time()})
-
-        self.ioloop.add_timeout(timedelta(seconds=1), self.ping)
-        pass
-        
 
 class Worker(object):
     def __init__(self, app, settings, queue, io_loop=None):
@@ -72,7 +60,7 @@ class Worker(object):
         self.pipeline = Pipeline(settings.PIPELINE, settings=settings, work_queue=queue, user_settings=app.user_settings)
         self.running_fetchers  = 0
         self.total_fetch_count = 0
-        self.loop()
+        self.ioloop.add_callback(self.loop)
 
     @gen.engine
     def loop(self):
@@ -81,7 +69,7 @@ class Worker(object):
             return
 
         try:
-            task, closure = self.queue.pop()
+            task, complete_cb = yield gen.Task(self.queue.pop)
         except Exception as e:
             self.ioloop.add_timeout(timedelta(seconds=1), self.loop)
             return
@@ -92,22 +80,25 @@ class Worker(object):
             self.running_fetchers  += 1
 
             yield gen.Task(self.pipeline.process, task)
-            closure(True)
+            complete_cb(True, task)
 
             self.total_fetch_count += 1
             self.running_fetchers  -= 1
 
-            models.LogEvent("Crawled %d %s" % (task.response.code, task.url)).save()
+            if task.response:
+                models.LogEvent("Crawled %d %s" % (task.response.code, task.url)).save()
+            else:
+                models.LogEvent("NOT Crawled %s" % (task.url)).save()
             logging.debug("Finished task url=%s" % task.url)
 
         self.ioloop.add_callback(self.loop)
 
-def main():
+def application():
     tornado.options.parse_command_line()
 
-    queue    = SpiderQueue()
-    app      = Application(queue)
-    worker   = Worker(app, settings, queue)
+    #queue    = SpiderQueue()
+    app      = Application()
+    worker   = Worker(app, settings, app.work_queue)
 
     http_server = tornado.httpserver.HTTPServer(app)
 
@@ -123,6 +114,24 @@ def main():
         tornado.ioloop.IOLoop.instance().start()
     except KeyboardInterrupt:
         pass
+
+def test():
+    r = redis.Client()
+    r.connect()
+    print r
+    queue = RedisQueue(r)
+
+    items = []
+    def cb(v):
+        items = v
+
+    queue.items(cb)
+    print items
+
+    tornado.ioloop.IOLoop.instance().start()
+
+def main():
+    application()
 
 if __name__ == '__main__':
     main()

@@ -1,6 +1,8 @@
 from collections import defaultdict, deque
 from datetime import datetime, timedelta
 
+# This should manage seen_set
+
 class SpiderBucket(deque):
     def __init__(self, parent=None, *args, **kwargs):
         self._processing = 0
@@ -15,14 +17,14 @@ class SpiderBucket(deque):
 
     def pop(self, timenow=None):
         if not self:
-            return None
+            return None, None
 
         # If the bucket is "busy"
         if timenow and self._time > timenow:
-            return None
+            return None, None
 
         if self._processing == self._concurent_crawler:
-            return None
+            return None, None
 
         self._time = timenow
         if self._delay:
@@ -35,13 +37,15 @@ class SpiderBucket(deque):
 
         return self.popleft(), self._callback
 
-    def _callback(self, success):
+    def _callback(self, success, task):
         self._processing -= 1
 
 class SpiderQueue(object):
+    BUCKET_CLASS = SpiderBucket
+
     def __init__(self):
         self._length = 0
-        self._buckets = defaultdict(lambda *a: SpiderBucket(parent=self))
+        self._buckets = defaultdict(lambda *a: self.BUCKET_CLASS(parent=self))
         self._last_time = None
         self._bucket_list = []
         self._bucket_idx = 0
@@ -56,7 +60,7 @@ class SpiderQueue(object):
         self._buckets[bucket].append(task)
         self._length += 1
 
-    def pop(self):
+    def pop(self, callback):
         tnow   = datetime.now()
         retval = None
 
@@ -70,11 +74,12 @@ class SpiderQueue(object):
             retval = bucket.pop(timenow=tnow)
             if retval is not None:
                 self._length -= 1
-                return retval
+                break
 
-        return None
+        callback(retval)
 
     def __iter__(self):
+        """ Primarily used as a UI query to see what's up """
         for bid, bucket in self._buckets.iteritems():
             yield bid, len(bucket), bucket._counter
 

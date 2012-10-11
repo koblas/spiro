@@ -39,6 +39,12 @@ QUEUE_LOCK_TIMEOUT = 60             # 60 seconds
 QUEUE_LOCK_REFRESH = 10             # refresh the lock if we're within 10 seconds of expiration
 
 class RedisBucket(SpiderBucket):
+    def has_url(self, url):
+        for task in self:
+            if task.url == url:
+                return True
+        return False
+
     def _callback(self, success, task):
         super(RedisBucket, self)._callback(success, task)
 
@@ -68,13 +74,13 @@ class RedisQueue(SpiderQueue):
            Add the url to the priority list of urls to be crawlled
         """
         if not task.force and task.url in self._seen_cache:
-            logging.debug("RedisQueue: SEEN %s in cache" % task.url)
+            #logging.debug("RedisQueue: SEEN %s in cache" % task.url)
             return
         self._seen_cache[task.url] = True
 
         (clnt, val), kw = yield gen.Task(self.redis.sadd, SEEN_SET, task.url)
         if not task.force and not val:
-            logging.debug("RedisQueue: SEEN %s in redis" % task.url)
+            #logging.debug("RedisQueue: SEEN %s in redis" % task.url)
             return
 
         self.redis.zadd(URL_QUEUE_KEY % task.url_host, 1, task.url)
@@ -164,6 +170,8 @@ class RedisQueue(SpiderQueue):
 
                 # Queue them up
                 for url in urls or []:
+                    if self._buckets[bid].has_url(url):
+                        continue
                     self._buckets[bid].append(Task(url))
                 retval, cb = self._buckets[bid].pop(timenow=datetime.now())
                 if retval:

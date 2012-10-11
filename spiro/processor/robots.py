@@ -23,7 +23,6 @@ class RobotCheck(Step):
     def process(self, task, callback=None, **kwargs):
         url = "%s://%s/robots.txt" % (task.url_scheme, task.url_host)
 
-        print url
         if url in self.cache:
             matcher = self.cache[url]
         else:

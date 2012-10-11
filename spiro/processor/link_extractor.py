@@ -5,16 +5,29 @@ from .base import Step
 
 class HtmlLinkExtractor(Step):
     def __init__(self, settings, **kwargs):
-        pass
+        self.enable_nofollow = True
 
     def process(self, task, callback=None, **kwargs):
         if task.response.body:
             url = task.request.url
 
             q = pq(task.response.body)
+
+            if self.enable_nofollow:
+                for meta in q('meta'):
+                    if meta.attrib.get('name', "").lower() != 'robots':
+                        continue
+                    content = meta.attrib.get('content', None)
+                    if not content:
+                        continue
+
+                    if 'nofollow' in content.lower().split(','):
+                        return callback((Step.CONTINUE, task))
+
             for link in q('a'):
+                rel  = link.attrib.get('rel', '')
                 href = link.attrib.get('href', None)
-                if not href:
+                if not href or (self.enable_nofollow and rel.lower() == 'nofollow'):
                     continue
 
                 full_url = urljoin(url, href)

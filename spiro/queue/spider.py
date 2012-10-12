@@ -62,7 +62,7 @@ class SpiderQueue(object):
 
     def pop(self, callback):
         tnow   = datetime.now()
-        retval = None
+        retval = None, None
 
         for idx in range(0, len(self._bucket_list)):
             # Shift from the front to the end

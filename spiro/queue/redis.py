@@ -92,24 +92,6 @@ class RedisQueue(SpiderQueue):
             if val:
                 yield gen.Task(self.redis.rpush, BUCKETS_KEY, bid)
 
-    def _pop(self):
-        tnow   = datetime.now()
-        retval = None
-
-        for idx in range(0, len(self._bucket_list)):
-            # Shift from the front to the end
-            bid = self._bucket_list.pop(0)
-            self._bucket_list.append(bid)
-            bucket = self._buckets[bid]
-
-            # No need to process an empty bucket
-            retval = bucket.pop(timenow=tnow)
-            if retval is not None:
-                self._length -= 1
-                return retval
-
-        return None
-
     def __nonzero__(self):
         """ Since we have to consult Redis - we assume we've got work """
         return True
@@ -129,8 +111,7 @@ class RedisQueue(SpiderQueue):
                 self._owned[bid] = tval + QUEUE_LOCK_TIMEOUT
                 logging.debug("RedisQueue: Refreshed bucket=%s expires - pre" % bid)
 
-        retval = self._pop()
-        cb     = None
+        retval, cb = yield gen.Task(super(RedisQueue, self).pop)
 
         first_bid = None
         if not retval:

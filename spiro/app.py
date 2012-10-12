@@ -68,28 +68,31 @@ class Worker(object):
             self.ioloop.add_timeout(timedelta(seconds=1), self.loop)
             return
 
+        task = None
         try:
             task, complete_cb = yield gen.Task(self.queue.pop)
         except Exception as e:
             self.ioloop.add_timeout(timedelta(seconds=1), self.loop)
+
+        if not task:
+            self.ioloop.add_timeout(timedelta(seconds=1), self.loop)
             return
 
-        if task:
-            logging.debug("Staring task url=%s" % task.url)
+        logging.debug("Staring task url=%s" % task.url)
 
-            self.running_fetchers  += 1
+        self.running_fetchers  += 1
 
-            yield gen.Task(self.pipeline.process, task)
-            complete_cb(True, task)
+        yield gen.Task(self.pipeline.process, task)
+        complete_cb(True, task)
 
-            self.total_fetch_count += 1
-            self.running_fetchers  -= 1
+        self.total_fetch_count += 1
+        self.running_fetchers  -= 1
 
-            if task.response:
-                models.LogEvent("Crawled %d %s" % (task.response.code, task.url)).save()
-            else:
-                models.LogEvent("NOT Crawled %s" % (task.url)).save()
-            logging.debug("Finished task url=%s" % task.url)
+        if task.response:
+            models.LogEvent("Crawled %d %s" % (task.response.code, task.url)).save()
+        else:
+            models.LogEvent("NOT Crawled %s" % (task.url)).save()
+        logging.debug("Finished task url=%s" % task.url)
 
         self.ioloop.add_callback(self.loop)
 

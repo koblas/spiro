@@ -11,7 +11,7 @@ class HtmlLinkExtractor(Step):
         if task.response.body:
             url = task.request.url
 
-            q = pq(task.response.body)
+            q = pq(task.response.body.replace(' xmlns="', ' xmlnamespace="'))
 
             if self.enable_nofollow:
                 for meta in q('meta'):

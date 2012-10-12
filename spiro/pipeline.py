@@ -24,7 +24,10 @@ class Pipeline(object):
         for item in self.steps:
             logging.debug("Running %s %r", item.__class__.__name__, args[0])
 
-            yvalue = yield gen.Task(item.process, *nargs, **kwargs)
+            try:
+                yvalue = yield gen.Task(item.process, *nargs, **kwargs)
+            except Exception as e:
+                logging.error("Pipeline Exception", e)
 
             # print "Call = %r   Val = %r" % (item, yvalue)
             action, res = yvalue

@@ -1,5 +1,6 @@
 import tornado.web
 from tornado import gen
+from spiro.processor.robots import RobotCheck
 import json
 import urlparse
 import time
@@ -139,12 +140,18 @@ class RobotRuleDataHandler(tornado.web.RequestHandler):
         rule = RobotRule(**obj)
         rule.save()
 
+        RobotCheck.remove_site(rule.site)
+
         self.finish(rule.serialize())
 
     @tornado.web.asynchronous
     @gen.engine
     def delete(self, id=None):
-        RobotRule.objects(id=id).delete()
+        rule = RobotRule.objects(id=id).get()
+
+        RobotCheck.remove_site(rule.site)
+
+        rule.delete()
 
         self.finish({})
 

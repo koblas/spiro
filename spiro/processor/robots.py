@@ -5,6 +5,7 @@ from .fetch import Fetch
 from .store import StoreResponse
 from spiro.util.robotparser import RobotParser
 from spiro.util.cache import LRUCache
+from spiro.models import RobotRule
 
 """
 Process a robots.txt file - and actually use it to control what's fetched
@@ -12,6 +13,11 @@ Process a robots.txt file - and actually use it to control what's fetched
 
 class RobotCheck(Step):
     cache = LRUCache(1000)
+
+    @classmethod
+    def remove_site(cls, site):
+        if site in cls.cache:
+            del cls.cache[site]
 
     def __init__(self, settings, **kwargs):
         """Initialzation"""
@@ -38,7 +44,12 @@ class RobotCheck(Step):
     @gen.engine
     def build_matcher(self, url, callback):
         task   = Task(url)
-        parser = RobotParser(useragent=self.settings.USER_AGENT)
+        extra_rules = []
+
+        for rule in RobotRule.objects(site=task.url_host):
+            extra_rules.append(('allow' if rule.flag else 'deny', rule.path))
+
+        parser = RobotParser(useragent=self.settings.USER_AGENT, extra_rules=extra_rules)
 
         v, t = yield gen.Task(self.fetch.process, task)
 

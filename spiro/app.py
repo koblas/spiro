@@ -2,6 +2,7 @@
 
 import logging
 import os
+import mongoengine
 import settings
 from datetime import timedelta
 import tornado.ioloop
@@ -17,7 +18,7 @@ define("bootstrap", default=False, help="Run the bootstrap model commands")
 
 from spiro.web.route import route
 from spiro.web.main import RedirectHandler
-from spiro.queue import SpiderQueue, RedisQueue
+from spiro.queue import RedisQueue
 from spiro.pipeline import Pipeline
 from spiro import redis
 from spiro import models
@@ -35,6 +36,8 @@ class Application(tornado.web.Application):
             template_path=os.path.join(os.path.dirname(__file__), "web", "templates"),
             static_path=os.path.join(os.path.dirname(__file__), "web", "static"),
         )
+
+        mongoengine.connect(settings.STORE_BUCKET)
 
         self.user_settings = models.Settings.singleton()
         self.redis = redis.Client()

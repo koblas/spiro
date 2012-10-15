@@ -37,6 +37,7 @@ define([
     //
     //
     var Models = {
+        Rules        : simpleMC('RobotRule'),
         LogEntries   : simpleMC('LogEntries'),
         CrawlQueue   : simpleMC('Queue')
     };
@@ -58,6 +59,16 @@ define([
             },
         })
     };
+
+    Models.Rules.Collection.prototype.comparator = function(a, b) {
+                var v = a.get('site').localeCompare(b.get('site'));
+                if (v != 0) 
+                    return v;
+                v = a.get('path').localeCompare(b.get('path'));
+                if (v != 0)
+                    return v;
+                return a.get('flag') - b.get('flag');
+            };
 
     return Models;
 });

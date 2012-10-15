@@ -24,6 +24,7 @@ require([
   "handlers/index",
   "handlers/queue",
   "handlers/settings",
+  "handlers/rules",
   "views/crawl_state",
   // "handlers/collection_list",
   // "handlers/item_list",
@@ -104,6 +105,8 @@ function (app, $, _, Backbone, Models) {
 
         app.data.queue      = new Models.CrawlQueue.Collection();
         app.data.logentries = new Models.LogEntries.Collection();
+        app.data.rules      = new Models.Rules.Collection();
+        app.data.rules.fetch({ async: false });
         
         app.data.logentries.token = '';
 

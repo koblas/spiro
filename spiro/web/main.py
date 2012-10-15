@@ -5,7 +5,7 @@ import urlparse
 import time
 from spiro import signals
 from spiro.task import Task
-from spiro.models import LogEvent, Settings
+from spiro.models import LogEvent, Settings, RobotRule
 from spiro.web.route import route
 
 LOG_LINES = []
@@ -118,6 +118,51 @@ class QueueDataHandler(tornado.web.RequestHandler):
             })
         self.finish(json.dumps(items))
 
+#
+#
+#
+@route("/data/RobotRule(?:/(.*)|)$")
+class RobotRuleDataHandler(tornado.web.RequestHandler):
+    ID = 0
+    RULES = []
+
+    def get(self, id=None):
+        items =[item.serialize() for item in RobotRule.objects.all()]
+        return self.finish(json.dumps(items))
+
+    @tornado.web.asynchronous
+    @gen.engine
+    def post(self, id=None):
+        obj = json.loads(self.request.body)
+
+        obj['flag'] = bool(obj['flag'])
+        rule = RobotRule(**obj)
+        rule.save()
+
+        self.finish(rule.serialize())
+
+    @tornado.web.asynchronous
+    @gen.engine
+    def delete(self, id=None):
+        RobotRule.objects(id=id).delete()
+
+        self.finish({})
+
+
+#
+#
+#
+def update_logs(*args, **kwargs):
+    global token
+    token = int(round(time.time() * 1000))
+    LOG_LINES.append((token, kwargs['instance']))
+
+signals.post_save.connect(update_logs, sender=LogEvent)
+
+
+#
+#
+#
 def update_logs(*args, **kwargs):
     global token
     token = int(round(time.time() * 1000))

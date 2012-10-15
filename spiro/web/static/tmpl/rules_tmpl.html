@@ -1,0 +1,30 @@
+<h2>Robot Rules</h2>
+
+<form class="form-inline">
+  <input type="text" id="site" class="input-medium" placeholder="Site">
+  <select id="flag" class="input-small">
+    <option value="1">Allow</option>
+    <option value="0">Deny</option>
+  </select>
+  <input type="text" id="path" class="input-medium" placeholder="Path">
+  <button type="submit" class="btn">Add</button>
+</form>
+
+<table class="table table-bordered table-condensed">
+  <tr>
+    <th width="0%">Site</th>
+    <th width="0%"></th>
+    <th width="90%">Path</th>
+    <th width="0%"></th>
+  </tr>
+{{#collection this.collection tagName="tbody"}}
+  <tr class="{{#if flag}}success{{else}}error{{/if}}">
+    <td>{{get site }}</td>
+    <td>{{#if this.attributes.flag }}Allow{{else}}Deny{{/if }}</td>
+    <td>{{get path }}</td>
+    <td><button data-id="{{get id}}" class="btn delete_button">Delete</button></td>
+  </tr>
+{{else}}
+  <tr><td>Add Some</td></tr>
+{{/collection}}
+</table>

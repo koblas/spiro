@@ -1,6 +1,7 @@
 import logging
 import uuid
 from redisco import models
+import mongoengine
 import time, hashlib
 from datetime import datetime
 #from blinker import Signal
@@ -142,3 +143,34 @@ class Settings(models.Model):
         cls.OBJS[id] = obj
 
         return obj
+
+#
+#  MongoEngine based documents
+#
+class EngineMixin(object):
+    def serialize(self):
+        from bson.objectid import ObjectId
+
+        result = {}
+
+        for k in self._fields.keys():
+            if k in ('password'):
+                continue
+
+            v = getattr(self, k)
+            if isinstance(v, ObjectId):
+                result[k] = str(v)
+            else:
+                result[k] = v
+
+        return result
+
+class RobotRule(mongoengine.Document, EngineMixin):
+    meta = {
+        'collection'        : 'RobotRule',
+        # 'allow_inheritance' : False,
+    }
+
+    flag       = mongoengine.BooleanField()
+    site       = mongoengine.StringField()
+    path       = mongoengine.StringField()

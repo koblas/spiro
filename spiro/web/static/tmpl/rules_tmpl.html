@@ -13,16 +13,16 @@
 <table class="table table-bordered table-condensed">
   <tr>
     <th width="0%">Site</th>
-    <th width="0%"></th>
+    <th width="0%">Action</th>
     <th width="90%">Path</th>
-    <th width="0%"></th>
   </tr>
 {{#collection this.collection tagName="tbody"}}
   <tr class="{{#if flag}}success{{else}}error{{/if}}">
     <td>{{get site }}</td>
     <td>{{#if this.attributes.flag }}Allow{{else}}Deny{{/if }}</td>
-    <td>{{get path }}</td>
-    <td><button data-id="{{get id}}" class="btn delete_button">Delete</button></td>
+    <td>{{get path }}
+      <button data-id="{{get id}}" class="pull-right btn delete_button"><i class="icon-trash"></i> Delete</button>
+    </td>
   </tr>
 {{else}}
   <tr><td>Add Some</td></tr>

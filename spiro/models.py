@@ -120,6 +120,8 @@ class Settings(mongoengine.Document, EngineMixin):
     crawler_running = mongoengine.BooleanField(default=True)
     _domain_helper  = DomainHelper()
 
+    OBJS = {}
+
     @property
     def domain_restriction(self):
         return self._domain_helper
@@ -132,10 +134,12 @@ class Settings(mongoengine.Document, EngineMixin):
         """
         id = str(id)
 
-        try:
-            obj = cls.objects.get(guid=id)
-        except cls.DoesNotExist:
-            obj = cls(guid=id)
-            obj.save()
+        if id not in cls.OBJS:
+            try:
+                cls.OBJS[id] = cls.objects.get(guid=id)
+            except cls.DoesNotExist:
+                obj = cls(guid=id)
+                obj.save()
+                cls.OBJS[id] = obj
 
-        return obj
+        return cls.OBJS[id]

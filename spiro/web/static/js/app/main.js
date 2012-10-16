@@ -25,6 +25,7 @@ require([
   "handlers/queue",
   "handlers/settings",
   "handlers/rules",
+  "handlers/stats",
   "handlers/domains",
   "views/crawl_state",
   // "handlers/collection_list",

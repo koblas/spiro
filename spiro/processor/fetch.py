@@ -2,8 +2,9 @@ from .base import Step
 import logging
 from tornado import gen
 from tornado import httpclient
+from spiro.models import PageStats
 
-from spiro.dnscache import DNSHandler
+#from spiro.dnscache import DNSHandler
 
 class Fetch(Step):
     def __init__(self, settings, **kwargs):
@@ -28,6 +29,7 @@ class Fetch(Step):
             raw_len = blen
 
         logging.debug("Fetched code=%d len_raw=%d len=%d url=%s" % (task.response.code, raw_len, blen, task.url))
+        PageStats.crawled(task.response.code, raw_len)
 
         if task.response.code == 200:
             task.content = task.content_from_response()

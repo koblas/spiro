@@ -36,4 +36,5 @@ Techologies Used
 * Distal - Backbone Views - https://github.com/koblas/distal
 * Blinker - PubSub Signals - http://discorporate.us/projects/Blinker/
 * MongoDB / Riak - KV NoSQL Database
-
+* Highcharts - http://www.highcharts.com/products/highcharts
+    - Note: Highsoft software products are not free for commercial use

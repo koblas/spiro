@@ -3,6 +3,34 @@ import mongoengine
 import time, hashlib
 from datetime import datetime
 from mongoengine import signals
+from collections import defaultdict
+
+class PageStats(object):
+    PPS = defaultdict(int)
+    BPS = defaultdict(int)
+
+    @classmethod
+    def crawled(cls, code, bytes):
+        tnow = int(time.time())
+        tnow = tnow - (tnow % 60);
+
+        cls.PPS[tnow] += 1
+        cls.BPS[tnow] += bytes
+
+    @classmethod
+    def stats(cls, timeframe=60):
+        pps = []
+        bps = []
+
+        tnow = int(time.time())
+        tnow = tnow - (tnow % 60);
+        for tval in range(tnow - timeframe*60, tnow + 60, 60):
+            if tval in cls.PPS:
+                pps.append((tval, cls.PPS[tval] / 60.0))
+            if tval in cls.BPS:
+                bps.append((tval, cls.BPS[tval] / 60.0))
+
+        return dict(pps=pps, bps=bps)
 
 #
 #

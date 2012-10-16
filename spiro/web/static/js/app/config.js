@@ -59,6 +59,9 @@ require.config({
         "vendor/jquery.toggle.buttons": {
             deps: ['jquery']
         },
+        "vendor/highcharts": {
+            deps: ['jquery']
+        },
         "vendor/jquery.uploadify-3.1.min": {
             deps: ['jquery']
         },

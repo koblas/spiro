@@ -4,7 +4,7 @@ from tornado import gen
 import json
 import time
 from spiro.task import Task
-from spiro.models import signals, LogEvent, Settings, RobotRule, DomainConfiguration
+from spiro.models import signals, LogEvent, Settings, RobotRule, DomainConfiguration, PageStats
 from spiro.web.route import route
 
 LOG_LINES = []
@@ -176,6 +176,13 @@ class DomainRestrictionDataHandler(tornado.web.RequestHandler):
 
         self.finish({})
 
+#
+#
+#
+@route("/data/stats/$")
+class StatsDataHandler(tornado.web.RequestHandler):
+    def get(self):
+        return self.finish(PageStats.stats())
 
 #
 #

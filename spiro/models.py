@@ -26,9 +26,9 @@ class PageStats(object):
         tnow = tnow - (tnow % 60);
         for tval in range(tnow - timeframe*60, tnow + 60, 60):
             if tval in cls.PPS:
-                pps.append((tval, cls.PPS[tval] / 60.0))
+                pps.append((tval, float("%.1f" % (cls.PPS[tval] / 60.0))))
             if tval in cls.BPS:
-                bps.append((tval, cls.BPS[tval] / 60.0))
+                bps.append((tval, int(cls.BPS[tval] / 60.0)))
 
         return dict(pps=pps, bps=bps)
 
@@ -38,14 +38,16 @@ class PageStats(object):
 class LogEvent(object):
     def __init__(self, msg):
         self.time = datetime.now()
+        self.ftime = self.time.strftime("%Y-%m-%d %H:%M:%S")
         self.id = hashlib.md5("%f" % time.time()).hexdigest()
         self.message = msg
 
     def serialize(self):
+        ts = self.time.strftime("%Y-%m-%d %H:%M:%S")
         return {
             'id' : self.id,
             'datetime' : self.time.strftime("%Y-%m-%d %H:%M:%S"),
-            'msg' : self.msg,
+            'msg' : "%s %s" % (ts, self.msg),
         }
 
     def save(self):

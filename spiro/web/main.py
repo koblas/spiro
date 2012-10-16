@@ -85,7 +85,7 @@ class LogEntriesDataHandler(tornado.web.RequestHandler):
             rtok = int(self.get_argument('token', None))
         except:
             rtok = 0
-        items = [{ 'token': token, 'message': obj[1].message } for obj in LOG_LINES if obj[0] > rtok]
+        items = [{ 'token': token, 'time': obj[1].ftime, 'message': obj[1].message } for obj in LOG_LINES if obj[0] > rtok]
         return self.finish(json.dumps(items))
 
 #

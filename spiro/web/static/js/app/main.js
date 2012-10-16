@@ -27,6 +27,7 @@ require([
   "handlers/rules",
   "handlers/stats",
   "handlers/domains",
+  "views/loglines",
   "views/crawl_state",
   // "handlers/collection_list",
   // "handlers/item_list",
@@ -48,6 +49,7 @@ function (app, $, _, Backbone, Models) {
     app.data = { };
 
     app.CrawlStateView = require("views/crawl_state");
+    app.LogLineView    = require("views/loglines");
 
     // Defining the application router, you can attach sub routers here.
     var AppView = Backbone.Distal.LayoutView.extend({
@@ -114,24 +116,6 @@ function (app, $, _, Backbone, Models) {
         app.data.domains.fetch();
         
         app.data.logentries.token = '';
-
-        setInterval(function() {
-            app.data.queue.fetch()
-
-            app.data.logentries.fetch({
-                data: {
-                    token: app.data.logentries.token
-                },
-                add: true,
-                success: function(collection, response) {
-                    var token = null;
-                    _.each(response, function(item) {
-                        token = token || item.token;
-                    });
-                    collection.token = token || collection.token;
-                }
-            })
-        }, 5000);
     });
 
     // Treat the jQuery ready function as the entry point to the application.

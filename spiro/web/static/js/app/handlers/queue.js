@@ -26,6 +26,20 @@ function (app, $, _, Backbone, Models) {
         initialize: function() {
             $('#leftbar .nav li').removeClass('active');
             $('#leftbar .nav #leftbar_queues').addClass('active');
+
+            function fetch_data() {
+                app.data.queue.fetch()
+            };
+
+            fetch_data();
+            
+            this.timer = setInterval(fetch_data, 5000);
+        },
+
+        onClose: function() {
+            if (this.timer) 
+                clearInterval(this.timer);
+            this.timer = null;
         },
 
         queues: function() {

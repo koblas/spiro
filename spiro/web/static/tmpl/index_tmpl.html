@@ -6,6 +6,4 @@
 </form>
 
 <h3>Log Information</h3>
-{{#collection App.data.logentries id="logentries" class="" tagName="ul" }}
-  <li>{{get message }}</li>
-{{/collection }}
+{{view App.LogLineView }}

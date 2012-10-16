@@ -1,0 +1,27 @@
+<h2>Crawlable Domains</h2>
+
+<div class="span4">
+<form class="form-inline">
+  <input type="text" id="domain" class="input-medium" placeholder="Domain">
+  <button type="submit" class="btn">Add</button>
+</form>
+
+<table class="table table-bordered table-condensed">
+  <thead>
+    <tr>
+      <th>Site</th>
+    </tr>
+  </thead>
+{{#collection this.collection tagName="tbody"}}
+  <tr xclass="{{#if flag}}success{{else}}error{{/if}}">
+    <td>{{get domain }}
+      <button title="Delete the Rule" data-id="{{get id}}" class="pull-right btn delete_button"><i data-id="{{get id }}" class="icon-trash"></i></button>
+    </td>
+  </tr>
+{{else}}
+  <tr>
+    <td>Add Some</td>
+  </tr>
+{{/collection}}
+</table>
+</div>

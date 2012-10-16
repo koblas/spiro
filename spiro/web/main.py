@@ -1,12 +1,10 @@
+import logging
 import tornado.web
 from tornado import gen
-from spiro.processor.robots import RobotCheck
 import json
-import urlparse
 import time
-from spiro import signals
 from spiro.task import Task
-from spiro.models import LogEvent, Settings, RobotRule
+from spiro.models import signals, LogEvent, Settings, RobotRule, DomainConfiguration
 from spiro.web.route import route
 
 LOG_LINES = []
@@ -36,12 +34,11 @@ class CrawlDataHandler(tornado.web.RequestHandler):
             task = Task(url, force=True)
 
             self.application.work_queue.add(task)
-
             self.application.user_settings.domain_restriction.add(task.url_host)
         
             LogEvent("Added %s" % url).save()
         except Exception as e:
-            print e
+            logging.error("Exception in Adding URL", e) 
             LogEvent("Bad URL Syntax %s" % url).save()
 
         self.finish({})
@@ -57,10 +54,7 @@ class SettingsHandler(tornado.web.RequestHandler):
     def get(self, id=1):
         obj = self._get_obj(id)
 
-        vals = { 'id' : obj.id }
-        vals.update(obj.attributes_dict)
-
-        self.finish(vals)
+        self.finish(obj.serialize())
 
     def put(self, id):
         data = json.loads(self.request.body)
@@ -79,7 +73,7 @@ class SettingsHandler(tornado.web.RequestHandler):
         if obj.save() is not True:
             tornado.web.HTTPError(404)
 
-        self.finish({})
+        self.finish(obj.serialize())
 
 #
 #  Get log events
@@ -140,8 +134,6 @@ class RobotRuleDataHandler(tornado.web.RequestHandler):
         rule = RobotRule(**obj)
         rule.save()
 
-        RobotCheck.remove_site(rule.site)
-
         self.finish(rule.serialize())
 
     @tornado.web.asynchronous
@@ -149,9 +141,38 @@ class RobotRuleDataHandler(tornado.web.RequestHandler):
     def delete(self, id=None):
         rule = RobotRule.objects(id=id).get()
 
-        RobotCheck.remove_site(rule.site)
-
         rule.delete()
+
+        self.finish({})
+
+#
+#
+#
+@route("/data/DomainConfiguration(?:/(.*)|)$")
+class DomainRestrictionDataHandler(tornado.web.RequestHandler):
+    ID = 0
+    RULES = []
+
+    def get(self, id=None):
+        items =[item.serialize() for item in DomainConfiguration.objects.all()]
+        return self.finish(json.dumps(items))
+
+    @tornado.web.asynchronous
+    @gen.engine
+    def post(self, id=None):
+        obj = json.loads(self.request.body)
+
+        model = DomainConfiguration(**obj)
+        model.save()
+
+        self.finish(model.serialize())
+
+    @tornado.web.asynchronous
+    @gen.engine
+    def delete(self, id=None):
+        model = DomainConfiguration.objects(id=id).get()
+
+        model.delete()
 
         self.finish({})
 
@@ -162,17 +183,6 @@ class RobotRuleDataHandler(tornado.web.RequestHandler):
 def update_logs(*args, **kwargs):
     global token
     token = int(round(time.time() * 1000))
-    LOG_LINES.append((token, kwargs['instance']))
-
-signals.post_save.connect(update_logs, sender=LogEvent)
-
-
-#
-#
-#
-def update_logs(*args, **kwargs):
-    global token
-    token = int(round(time.time() * 1000))
-    LOG_LINES.append((token, kwargs['instance']))
+    LOG_LINES.append((token, kwargs['document']))
 
 signals.post_save.connect(update_logs, sender=LogEvent)

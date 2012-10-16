@@ -121,21 +121,6 @@ def application():
     except KeyboardInterrupt:
         pass
 
-def test():
-    r = redis.Client()
-    r.connect()
-    print r
-    queue = RedisQueue(r)
-
-    items = []
-    def cb(v):
-        items = v
-
-    queue.items(cb)
-    print items
-
-    tornado.ioloop.IOLoop.instance().start()
-
 def main():
     application()
 

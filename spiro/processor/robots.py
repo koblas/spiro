@@ -1,3 +1,4 @@
+import logging
 from tornado import gen
 from spiro.task import Task
 from .base import Step
@@ -5,7 +6,7 @@ from .fetch import Fetch
 from .store import StoreResponse
 from spiro.util.robotparser import RobotParser
 from spiro.util.cache import LRUCache
-from spiro.models import RobotRule
+from spiro.models import RobotRule, signals
 
 """
 Process a robots.txt file - and actually use it to control what's fetched
@@ -15,9 +16,13 @@ class RobotCheck(Step):
     cache = LRUCache(1000)
 
     @classmethod
-    def remove_site(cls, site):
-        if site in cls.cache:
-            del cls.cache[site]
+    def post_save_clear(cls, sender, document, **kwargs):
+        logging.debug("Removing robots.txt cache information for: %s" % document.site)
+
+        for scheme in ('http', 'https'):
+            url = "%s://%s/robots.txt" % (scheme, document.site)
+            if url in cls.cache:
+                del cls.cache[url]
 
     def __init__(self, settings, **kwargs):
         """Initialzation"""
@@ -62,3 +67,6 @@ class RobotCheck(Step):
         matcher = parser.matcher(self.settings.ROBOT_NAME)
 
         callback(matcher)
+
+signals.post_save.connect(RobotCheck.post_save_clear, sender=RobotRule)
+signals.pre_delete.connect(RobotCheck.post_save_clear, sender=RobotRule)

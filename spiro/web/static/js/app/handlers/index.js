@@ -36,6 +36,9 @@ function (app, $, _, Backbone, Models) {
 
             $.post('/data/Crawl', {
                 url: url
+            }, function() {
+                // refech the domain list
+                app.data.domains.fetch();
             })
 
             $('#crawl input').val('');

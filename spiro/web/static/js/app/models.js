@@ -38,6 +38,7 @@ define([
     //
     var Models = {
         Rules        : simpleMC('RobotRule'),
+        Domains      : simpleMC('DomainConfiguration'),
         LogEntries   : simpleMC('LogEntries'),
         CrawlQueue   : simpleMC('Queue')
     };

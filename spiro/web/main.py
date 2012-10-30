@@ -1,3 +1,4 @@
+from datetime import datetime
 import logging
 import tornado.web
 from tornado import gen
@@ -62,6 +63,7 @@ class SettingsHandler(tornado.web.RequestHandler):
 
         if 'max_fetchers' in data:
             obj.max_fetchers = int(data['max_fetchers'])
+            self.application.set_fetchers(obj.max_fetchers)
         if 'crawl_delay' in data:
             obj.crawl_delay = float(data['crawl_delay'])
             self.application.work_queue.default_delay = obj.crawl_delay
@@ -85,8 +87,15 @@ class LogEntriesDataHandler(tornado.web.RequestHandler):
             rtok = int(self.get_argument('token', None))
         except:
             rtok = 0
-        items = [{ 'token': token, 'time': obj[1].ftime, 'message': obj[1].message } for obj in LOG_LINES if obj[0] > rtok]
-        return self.finish(json.dumps(items))
+
+        items = [{ 'tval': (obj[1].time-datetime(1970,1,1)).total_seconds(), 
+                   'time': obj[1].ftime, 
+                   'message': obj[1].message 
+               } for obj in LOG_LINES if obj[0] > rtok]
+        return self.finish(json.dumps({
+                                'token' : token,
+                                'items' : items,
+                            }))
 
 #
 #  Current Crawl Queue
@@ -110,6 +119,7 @@ class QueueDataHandler(tornado.web.RequestHandler):
                 'host'  : item[0],
                 'count' : item[1],
                 'total' : item[2],
+                'ave_resp' : float("%.2f" % self.application.metrics.ave('response:%s' % item[0])),
             })
         self.finish(json.dumps(items))
 
@@ -188,8 +198,10 @@ class StatsDataHandler(tornado.web.RequestHandler):
 #
 #
 def update_logs(*args, **kwargs):
-    global token
+    global token, LOG_LINES
     token = int(round(time.time() * 1000))
     LOG_LINES.append((token, kwargs['document']))
+    if len(LOG_LINES) > 200:
+        del LOG_LINES[0:-200]
 
 signals.post_save.connect(update_logs, sender=LogEvent)

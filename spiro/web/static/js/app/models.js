@@ -42,6 +42,10 @@ define([
         LogEntries   : simpleMC('LogEntries'),
         CrawlQueue   : simpleMC('Queue')
     };
+
+    Models.LogEntries.Collection.prototype.comparator = function(item) {
+        return item.get('tval');
+    };
     
     /*
     Models.CrawlerState = {

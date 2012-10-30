@@ -43,9 +43,10 @@ function (app, $, _, Backbone, Models) {
                 },
                 xAxis: {
                     type: 'datetime',
+                    minRange: 10 * 1000,
                     dateTimeLabelFormats: {
-                        minute: '%e. %b',
-                        year: '%b'
+                        second: '%H:%M:%S',
+                        minute: '%H:%M:00',
                     }
                 },
                 yAxis: [
@@ -61,11 +62,13 @@ function (app, $, _, Backbone, Models) {
                                 name: 'Bytes per Second',
                                 index: 0,
                                 yAxis: 0,
+                                pointInterval: 30 * 1000,
                                 data: []
                         }, {
                                 name: 'Pages per Second',
                                 index: 1,
                                 yAxis: 1,
+                                pointInterval: 30 * 1000,
                                 data: []
                         }
                 ]

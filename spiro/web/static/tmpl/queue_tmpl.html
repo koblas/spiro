@@ -2,9 +2,9 @@
 
 <table class="table table-striped">
   <thead>
-    <tr><th>Count</th><th>Site</th><th>Crawled</th></tr>
+    <tr><th>Count</th><th>Site</th><th>Crawled</th><th>Ave. Response Time</th></tr>
   </thead>
   {{#collection this.queues tagName="tbody" }}
-    <tr><td>{{ get count }}</td><td>{{get host }}</td><td>{{ get total }}</td></tr>
+    <tr><td>{{ get count }}</td><td>{{get host }}</td><td>{{ get total }}</td><td>{{ get ave_resp }}</td></tr>
   {{/collection}}
 </table>

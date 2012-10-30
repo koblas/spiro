@@ -25,19 +25,25 @@ function (app, $, _, Backbone, Models) {
             this.timer = null;
 
             function fetch_data() {
-                app.data.logentries.fetch({
+                var collection = app.data.logentries;
+
+                $.ajax("/data/LogEntries", {
+                    async: true,
                     data: {
-                        token: app.data.logentries.token
+                        token: collection.token
                     },
-                    add: true,
-                    success: function(collection, response) {
-                        var token = null;
-                        _.each(response, function(item) {
-                            token = token || item.token;
-                        });
-                        collection.token = token || collection.token;
+                    dataType: 'json',
+                    success: function(response, textStatus, xhr) {
+                        collection.token = response.token || collection.token;
+
+                        collection.add(response.items, { slient: true });
+
+                        while (collection.length > 20) {
+                            collection.shift({ silent: true });
+                        }
+                        collection.trigger('add');
                     }
-                })
+                });
             };
 
             fetch_data();

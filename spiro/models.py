@@ -6,29 +6,37 @@ from mongoengine import signals
 from collections import defaultdict
 
 class PageStats(object):
+    BUCKET_SIZE = 60    # Accumulate 60 seconds worth of data in one bucket
+
     PPS = defaultdict(int)
     BPS = defaultdict(int)
 
     @classmethod
-    def crawled(cls, code, bytes):
+    def now(cls):
         tnow = int(time.time())
-        tnow = tnow - (tnow % 60);
+        return tnow - (tnow % cls.BUCKET_SIZE);
+
+    @classmethod
+    def crawled(cls, code, bytes):
+        tnow = cls.now()
 
         cls.PPS[tnow] += 1
         cls.BPS[tnow] += bytes
 
     @classmethod
     def stats(cls, timeframe=60):
+        """Print the crawl stats - default for the last hour"""
         pps = []
         bps = []
 
-        tnow = int(time.time())
-        tnow = tnow - (tnow % 60);
-        for tval in range(tnow - timeframe*60, tnow + 60, 60):
+        # Get the current time
+        tnow = cls.now()
+
+        for tval in range(tnow - timeframe * cls.BUCKET_SIZE, tnow + cls.BUCKET_SIZE, cls.BUCKET_SIZE):
             if tval in cls.PPS:
-                pps.append((tval, float("%.1f" % (cls.PPS[tval] / 60.0))))
+                pps.append((tval * 1000, float("%.1f" % (cls.PPS[tval] / float(cls.BUCKET_SIZE)))))
             if tval in cls.BPS:
-                bps.append((tval, int(cls.BPS[tval] / 60.0)))
+                bps.append((tval * 1000, int(cls.BPS[tval] / float(cls.BUCKET_SIZE))))
 
         return dict(pps=pps, bps=bps)
 

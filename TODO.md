@@ -9,3 +9,5 @@
 * Distributed BloomFilter for crawled URLs?
 * Pipeline performance page (how many times called, mean/average call time)
 * Fabric deploy scripts for AWS
+* Allow pipeline steps to add headers to the fetch e.g. If-Modified-Since and insure that the 
+  correct actions happen if a 304 is returned.

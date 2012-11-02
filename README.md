@@ -26,8 +26,8 @@ Basic Design
 
 Much of the design is inspired by these blog posts:
 
-   [1] http://blog.semantics3.com/how-we-built-our-almost-distributed-web-crawler/
-   [2] http://www.michaelnielsen.org/ddi/how-to-crawl-a-quarter-billion-webpages-in-40-hours/
+* [1] http://blog.semantics3.com/how-we-built-our-almost-distributed-web-crawler/
+* [2] http://www.michaelnielsen.org/ddi/how-to-crawl-a-quarter-billion-webpages-in-40-hours/
 
 MongoDB is used to store basic settings (crawler on, allowed domains, etc.etc.)  Most of the crawler
 processing is managed via a Redis based Queue.  Which is sliced and locked based on domain name, once 
@@ -41,8 +41,8 @@ list.
 Other References
 ----------------
 
-   http://dev.gbif.org/wiki/display/DEV/ZooKeeper+structure
-   http://blog.marc-seeger.de/assets/papers/thesis_seeger-building_blocks_of_a_scalable_webcrawler.pdf
+* http://dev.gbif.org/wiki/display/DEV/ZooKeeper+structure
+* http://blog.marc-seeger.de/assets/papers/thesis_seeger-building_blocks_of_a_scalable_webcrawler.pdf
 
 Techologies Used
 ----------------

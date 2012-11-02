@@ -1,4 +1,5 @@
 from setuptools import setup
+import os
 import re
 
 def read(fname):
@@ -7,7 +8,7 @@ def read(fname):
 __version__ = re.search( "__version__\s*=\s*'(.*)'", read('spiro/__init__.py'), re.M).group(1)
 assert __version__
 
-long_description = read("README")
+long_description = read("README.md")
 assert long_description
 
 setup(

@@ -14,9 +14,16 @@
   </div>
 
   <div class="control-group">
-    <label class="control-label" for="max_fetchers">Max Concurent Fetchers</label>
+    <label class="control-label" for="max_fetchers">Max Fetchers</label>
     <div class="controls">
       <input type="text" id="max_fetchers" value="{{ get max_fetchers }}" placeholder="">
+    </div>
+  </div>
+
+  <div class="control-group">
+    <label class="control-label" for="max_fetchers">Per Domain Concurrent Fetchers</label>
+    <div class="controls">
+      <input type="text" id="domain_concurrency" value="{{ get domain_concurrency }}" placeholder="">
     </div>
   </div>
 

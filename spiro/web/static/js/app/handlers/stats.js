@@ -28,6 +28,8 @@ function (app, $, _, Backbone, Models) {
             $('#leftbar .nav li').removeClass('active');
             $('#leftbar .nav #leftbar_stats').addClass('active');
             this.timer = null;
+
+            this.pipe_stats = new Backbone.Collection()
         },
 
         post_render: function() {
@@ -77,6 +79,15 @@ function (app, $, _, Backbone, Models) {
             var self = this;
 
             function fetch_data() {
+                $.ajax({
+                    url: "/data/stats/pipeline",
+                    dataType: 'json',
+                    success: function(data) {
+                        self.pipe_stats.reset(data);
+                        self.pipe_stats.trigger('change');
+                    }
+                });
+
                 $.ajax({
                     url: "/data/stats/",
                     dataType: 'json',

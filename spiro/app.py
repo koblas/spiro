@@ -18,7 +18,7 @@ define("purge", help="Purge all of the queue entries for a domain", type=str)
 
 from spiro.web.route import route
 from spiro.web.main import RedirectHandler
-from spiro.metrics import Metrics
+from spiro.metrics import systemMetrics
 from spiro.queue import RedisQueue
 from spiro.pipeline import Pipeline
 from spiro import redis
@@ -58,7 +58,6 @@ class Application(tornado.web.Application):
         self.redis.connect()
         self.work_queue = RedisQueue(self.redis)
         self.work_queue.default_delay = self.user_settings.crawl_delay
-        self.metrics = Metrics()
 
         routes = route.get_routes()
         # Hast to be the last route...
@@ -72,10 +71,20 @@ class Application(tornado.web.Application):
         self.ioloop  = tornado.ioloop.IOLoop.instance()
 
         self.fetchers = []
-        self.set_fetchers(self.user_settings.max_fetchers)
 
-    def set_fetchers(self, count):
-        print "SETTING POOL SIZE", count, len(self.fetchers)
+        models.signals.post_save.connect(self._settings_update, sender=models.Settings)
+
+        self._settings_update(models.Settings, self.user_settings)
+
+    def _settings_update(self, sender, document, *args, **kwargs):
+        """When the user settings change"""
+
+        # Update the default crawl delay
+        self.work_queue.default_delay = document.crawl_delay
+        self.work_queue.default_concurrency = document.domain_concurrency
+
+        # Update the fetcher pool
+        count = document.max_fetchers
 
         while count < len(self.fetchers):
             fetcher = self.fetchers.pop()
@@ -122,7 +131,7 @@ class Worker(object):
         yield gen.Task(self.pipeline.process, task)
         complete_cb(True, task)
 
-        self.app.metrics.add('response:%s' % task.url_host, task.response.request_time)
+        systemMetrics.add('response:%s' % task.url_host, task.response.request_time)
 
         self.total_fetch_count += 1
         self.running_fetchers  -= 1

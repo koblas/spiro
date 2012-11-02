@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 class SpiderBucket(deque):
     def __init__(self, parent=None, *args, **kwargs):
         self._processing = 0
-        self._concurent_crawler = 2
+        self._concurrent_crawler = None
         self._parent = parent
 
         self._delay   = None
@@ -23,7 +23,7 @@ class SpiderBucket(deque):
         if timenow and self._time > timenow:
             return None, None
 
-        if self._processing == self._concurent_crawler:
+        if self._processing == (self._concurrent_crawler or self._parent.default_concurrency):
             return None, None
 
         self._time = timenow
@@ -82,6 +82,14 @@ class SpiderQueue(object):
         """ Primarily used as a UI query to see what's up """
         for bid, bucket in self._buckets.iteritems():
             yield bid, len(bucket), bucket._counter
+
+    @property
+    def default_concurrency(self):
+        return self._default_concurrency
+
+    @default_concurrency.setter
+    def default_concurrency(self, value):
+        self._default_concurrency = value
 
     @property
     def default_delay(self):

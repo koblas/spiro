@@ -4,6 +4,7 @@ import tornado.web
 from tornado import gen
 import json
 import time
+from spiro.metrics import systemMetrics
 from spiro.task import Task
 from spiro.models import signals, LogEvent, Settings, RobotRule, DomainConfiguration, PageStats
 from spiro.web.route import route
@@ -60,10 +61,10 @@ class SettingsHandler(tornado.web.RequestHandler):
 
         if 'max_fetchers' in data:
             obj.max_fetchers = int(data['max_fetchers'])
-            self.application.set_fetchers(obj.max_fetchers)
+        if 'domain_concurrency' in data:
+            obj.domain_concurrency = int(data['domain_concurrency'])
         if 'crawl_delay' in data:
             obj.crawl_delay = float(data['crawl_delay'])
-            self.application.work_queue.default_delay = obj.crawl_delay
         if 'follow_links' in data:
             obj.follow_links = data['follow_links']
         if 'crawler_running' in data:
@@ -130,7 +131,7 @@ class QueueDataHandler(tornado.web.RequestHandler):
                 'host'  : item[0],
                 'count' : item[1],
                 'total' : item[2],
-                'ave_resp' : float("%.2f" % self.application.metrics.ave('response:%s' % item[0])),
+                'ave_resp' : float("%.2f" % systemMetrics.ave('response:%s' % item[0])),
             })
         self.finish(json.dumps(items))
 
@@ -205,6 +206,22 @@ class StatsDataHandler(tornado.web.RequestHandler):
     def get(self):
         return self.finish(PageStats.stats())
 
-#
-#
-#
+@route("/data/stats/pipeline$")
+class StatsDataHandler(tornado.web.RequestHandler):
+    def get(self):
+        metrics = {}
+        for k, v in systemMetrics.items():
+            if not k.startswith("pipeline:"):
+                continue
+            _, step, kind = k.split(':')
+            if step not in metrics:
+                metrics[step] = {}
+            if kind == 'calls':
+                metrics[step]['calls']  = systemMetrics.value(k)
+            elif kind == 'time':
+                metrics[step]['median'] = int(systemMetrics.median(k) * 1000)
+                metrics[step]['ave']    = int(systemMetrics.ave(k) * 1000)
+        if not metrics:
+            return self.finish(json.dumps([]))
+        else:
+            return self.finish(json.dumps( [dict([('id',k)]+list(v.items())) for k, v in metrics.items()] ))

@@ -124,6 +124,7 @@ class Settings(mongoengine.Document, EngineMixin):
     guid            = mongoengine.StringField()
     crawl_delay     = mongoengine.FloatField(default=1.0)
     max_fetchers    = mongoengine.IntField(default=100)
+    domain_concurrency = mongoengine.IntField(default=2)
     follow_links    = mongoengine.BooleanField(default=True)
     crawler_running = mongoengine.BooleanField(default=True)
     _domain_helper  = DomainHelper()

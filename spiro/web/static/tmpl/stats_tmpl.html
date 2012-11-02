@@ -1,3 +1,23 @@
 <h2>Useful Stats</h2>
 
 <div id="statcontainer" class="span8" style="height: 400px"></div>
+<div class="clearfix"/>
+<h3>Pipeline processing info</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Step</th>
+      <th>Calls</th>
+      <th>Average - in ms</th>
+      <th>Median - in ms</th>
+    </tr>
+  </thead>
+{{#collection this.pipe_stats tagName="tbody"}}
+  <tr>
+    <td>{{get id }}</td>
+    <td>{{get calls }}</td>
+    <td>{{get ave }}</td>
+    <td>{{get median }}</td>
+  </tr>
+{{/collection}}
+</table>

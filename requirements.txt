@@ -1,6 +1,5 @@
 tornado
 pyquery
 pymongo
-redisco
 blinker
 mongoengine

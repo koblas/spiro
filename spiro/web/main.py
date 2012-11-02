@@ -8,9 +8,6 @@ from spiro.task import Task
 from spiro.models import signals, LogEvent, Settings, RobotRule, DomainConfiguration, PageStats
 from spiro.web.route import route
 
-LOG_LINES = []
-token = int(round(time.time() * 1000))
-
 class RedirectHandler(tornado.web.RequestHandler):
     def get(self, path):
         return self.redirect('/#' + path)
@@ -82,6 +79,18 @@ class SettingsHandler(tornado.web.RequestHandler):
 #
 @route("/data/LogEntries(?:/(.*)|)$")
 class LogEntriesDataHandler(tornado.web.RequestHandler):
+    LOG_LINES = []
+    token = int(round(time.time() * 1000))
+
+    @classmethod
+    def update_logs(cls, sender, document, *args, **kwargs):
+        print sender, document, args, kwargs
+
+        cls.token = int(round(time.time() * 1000))
+        cls.LOG_LINES.append((cls.token, document))
+        if len(cls.LOG_LINES) > 200:
+            del cls.LOG_LINES[0:-200]
+
     def get(self, id=None):
         try:
             rtok = int(self.get_argument('token', None))
@@ -91,11 +100,13 @@ class LogEntriesDataHandler(tornado.web.RequestHandler):
         items = [{ 'tval': (obj[1].time-datetime(1970,1,1)).total_seconds(), 
                    'time': obj[1].ftime, 
                    'message': obj[1].message 
-               } for obj in LOG_LINES if obj[0] > rtok]
+               } for obj in self.LOG_LINES if obj[0] > rtok]
         return self.finish(json.dumps({
-                                'token' : token,
+                                'token' : self.token,
                                 'items' : items,
                             }))
+
+signals.post_save.connect(LogEntriesDataHandler.update_logs, sender=LogEvent)
 
 #
 #  Current Crawl Queue
@@ -197,11 +208,3 @@ class StatsDataHandler(tornado.web.RequestHandler):
 #
 #
 #
-def update_logs(*args, **kwargs):
-    global token, LOG_LINES
-    token = int(round(time.time() * 1000))
-    LOG_LINES.append((token, kwargs['document']))
-    if len(LOG_LINES) > 200:
-        del LOG_LINES[0:-200]
-
-signals.post_save.connect(update_logs, sender=LogEvent)

@@ -14,7 +14,7 @@ from tornado.options import define, options
 define("debug", default=False, help="run in debug mode", type=bool)
 define("prefork", default=False, help="pre-fork across all CPUs", type=bool)
 define("port", default=9000, help="run on the given port", type=int)
-define("bootstrap", default=False, help="Run the bootstrap model commands")
+define("purge", help="Purge all of the queue entries for a domain", type=str)
 
 from spiro.web.route import route
 from spiro.web.main import RedirectHandler
@@ -24,6 +24,19 @@ from spiro.pipeline import Pipeline
 from spiro import redis
 from spiro import models
 
+class PurgeHandler(object):
+    def __init__(self, host, ioloop=None):
+        self.ioloop  = ioloop or tornado.ioloop.IOLoop.instance()
+        self.ioloop.add_callback(self.loop)
+        self.host = host
+        self.redis = redis.Client()
+        self.redis.connect()
+        logging.info("Scheduling purge of %s" % host)
+
+    @gen.engine
+    def loop(self):
+        (clnt, val), kw = yield gen.Task(self.redis.delete, "Spiro:Queue:%s" % self.host)
+        self.ioloop.stop()
 #
 #
 #
@@ -128,18 +141,19 @@ class Worker(object):
 def application():
     tornado.options.parse_command_line()
 
-    #queue    = SpiderQueue()
-    app      = Application()
-
-    http_server = tornado.httpserver.HTTPServer(app)
-
-    print "Starting tornado on port", options.port
-    if options.prefork:
-        print "\tpre-forking"
-        http_server.bind(options.port)
-        http_server.start()
+    if options.purge:
+        PurgeHandler(options.purge)
     else:
-        http_server.listen(options.port)
+        app      = Application()
+        http_server = tornado.httpserver.HTTPServer(app)
+
+        print "Starting tornado on port", options.port
+        if options.prefork:
+            print "\tpre-forking"
+            http_server.bind(options.port)
+            http_server.start()
+        else:
+            http_server.listen(options.port)
 
     try:
         tornado.ioloop.IOLoop.instance().start()

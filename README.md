@@ -21,6 +21,10 @@ Looks like a Tornado app.
 
 Point your web browser at it.
 
+Example map process on the crawled data (scan pages in MongoDB and do "something")
+
+    python -m tools.map 
+
 Basic Design
 ------------
 

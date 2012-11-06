@@ -22,6 +22,7 @@ class MongoStore(Store):
         
         data = {
             'url'          : task.response.request.url,
+            'domain'       : task.url_host,
             'code'         : task.response.code,
             'body'         : getattr(task, 'content', None),
             'links'        : task.links,

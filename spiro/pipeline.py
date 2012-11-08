@@ -36,13 +36,11 @@ class Pipeline(object):
             except Exception as e:
                 logging.error("Pipeline Exception", e)
 
-            # print "Call = %r   Val = %r" % (item, yvalue)
             action, res = yvalue
 
             if action == Step.STOP:
                 logging.debug("Processing stoped by %s" % item.__class__.__name__)
                 break
-            # print 'in = %r   out = %r' % (nargs[0], res)
             nargs = [res]
 
         if callback:

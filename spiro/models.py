@@ -87,24 +87,30 @@ class RobotRule(mongoengine.Document, EngineMixin):
         'collection'        : 'RobotRule',
     }
 
+    order      = mongoengine.IntField(default=time.time)
     flag       = mongoengine.BooleanField()
     site       = mongoengine.StringField()
     path       = mongoengine.StringField()
 
 class DomainHelper(object):
-    def __init__(self):
-        self.data = None
-
     def __contains__(self, val):
-        if self.data is None:
-            self.data = {obj.domain for obj in DomainConfiguration.objects()}
         return val in self.data
 
+    @property
+    def data(self):
+        if not hasattr(self, '_data'):
+            self._data = {obj.domain for obj in DomainConfiguration.objects()}
+        return self._data
+
     def add(self, val):
+        if val in self.data:
+            return
         obj = DomainConfiguration(domain=val)
-        obj.save()
-        if self.data is None:
-            self.data = {obj.domain for obj in DomainConfiguration.objects()}
+        try:
+            obj.save()
+        except:
+            # TODO - should catch "DupCreated"
+            pass
         self.data.add(val)
 
 class DomainConfiguration(mongoengine.Document, EngineMixin):

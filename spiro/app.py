@@ -131,12 +131,11 @@ class Worker(object):
         yield gen.Task(self.pipeline.process, task)
         complete_cb(True, task)
 
-        systemMetrics.add('response:%s' % task.url_host, task.response.request_time)
-
         self.total_fetch_count += 1
         self.running_fetchers  -= 1
 
         if task.response:
+            systemMetrics.add('response:%s' % task.url_host, task.response.request_time)
             models.LogEvent("Crawled %d %s" % (task.response.code, task.url)).save()
         else:
             models.LogEvent("NOT Crawled %s" % (task.url)).save()
@@ -156,9 +155,8 @@ def application():
         app      = Application()
         http_server = tornado.httpserver.HTTPServer(app)
 
-        print "Starting tornado on port", options.port
+        logging.info("Starting tornado on port=%d prefork=%r" % (options.port, options.prefork))
         if options.prefork:
-            print "\tpre-forking"
             http_server.bind(options.port)
             http_server.start()
         else:

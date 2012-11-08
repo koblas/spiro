@@ -69,6 +69,11 @@ define([
                 var v = a.get('site').localeCompare(b.get('site'));
                 if (v != 0) 
                     return v;
+
+                v = a.get('order') - b.get('order');
+                if (v != 0)
+                    return v;
+
                 v = a.get('path').localeCompare(b.get('path'));
                 if (v != 0)
                     return v;

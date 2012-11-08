@@ -42,9 +42,8 @@ class RobotCheck(Step):
             
         if matcher.is_allowed_path(task.url_path):
             callback((Step.CONTINUE, task))
-            return
-
-        callback((Step.STOP, task))
+        else:
+            callback((Step.STOP, task))
 
     @gen.engine
     def build_matcher(self, url, callback):
@@ -52,9 +51,15 @@ class RobotCheck(Step):
         extra_rules = []
 
         for rule in RobotRule.objects(site=task.url_host):
-            extra_rules.append(('allow' if rule.flag else 'deny', rule.path))
+            extra_rules.append(('allow' if rule.flag else 'deny', rule.path, rule.order))
 
-        parser = RobotParser(useragent=self.settings.USER_AGENT, extra_rules=extra_rules)
+        extra_rules = sorted(extra_rules, key=lambda x: x[2])
+
+        try:
+            parser = RobotParser(useragent=self.settings.USER_AGENT, extra_rules=extra_rules)
+        except Exception as e:
+            logging.error("Exception building robot parser", e)
+            raise e
 
         v, t = yield gen.Task(self.fetch.process, task)
 

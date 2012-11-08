@@ -1,4 +1,5 @@
 import urllib, re, urlparse
+import logging
 
 __all__ = ['RobotParser']
 
@@ -55,11 +56,13 @@ class RuleSet(object) :
                 return True
         return False
 
-    def is_allowed_path(self, url) :
-        for type, path, regex in self._rules :
-            #print "URL=%s  type=%r  path=%r  re=%s" % (url, type, path, regex.pattern)
+    def is_allowed_path(self, url, debug=False):
+        for typ, path, regex in self._rules:
+            #logging.debug("RobotRule: action=%s path=%s url=%s" % (typ, path, url))
             if regex.match(url) :
-                return type == self.ALLOW
+                if debug:
+                    logging.debug("RobotRule Matched: action=%s path=%s url=%s" % (self.LABELS[typ], path, url))
+                return typ == self.ALLOW
 
         #print "NO rule for: ", url
         return True
@@ -81,15 +84,16 @@ class RuleSet(object) :
                "\n".join(["%s%s" % (self.LABELS[t], p) for t, p, r in self._rules])
 
 class Matcher(object) :
-    def __init__(self, rules, extra) :
+    def __init__(self, rules, extra, debug=False):
         self.rules = rules
         self.extra = extra
+        self._debug = debug
 
     def is_allowed(self, url) :
-        return self.rules.is_allowed(url) and self.extra.is_allowed(url)
+        return self.rules.is_allowed(url, debug=self._debug) and self.extra.is_allowed(url, debug=self._debug)
 
     def is_allowed_path(self, url) :
-        return self.rules.is_allowed_path(url) and self.extra.is_allowed_path(url)
+        return self.rules.is_allowed_path(url, debug=self._debug) and self.extra.is_allowed_path(url, debug=self._debug)
         
 
 class DefaultRuleSet(RuleSet) :
@@ -98,31 +102,32 @@ class DefaultRuleSet(RuleSet) :
 
         self._useragents.append('*')
 
-    def is_allowed(self, url) :
+    def is_allowed(self, url, debug=False) :
         return True
 
-    def is_allowed_path(self, url) :
+    def is_allowed_path(self, url, debug=False) :
         return True
 
 
 class RobotParser(object) :
     DEFAULT = DefaultRuleSet()
 
-    def __init__(self, useragent = None, robotname=None, content = None, extra_rules=None) :
+    def __init__(self, useragent = None, robotname=None, content = None, extra_rules=None, debug=False):
         # TODO - Some Docs
         self.source_url = None
         self.user_agent = useragent
         self.robot_name = robotname or useragent
         self._sitemap   = None
         self._rulesets  = []
+        self._debug     = debug
 
-        if extra_rules :
+        if extra_rules:
             self.extra_rules = RuleSet()
-            for type, path in extra_rules :
-                if type == 'allow' :
-                    self.extra_rules.add_allow(path)
+            for r in extra_rules:
+                if r[0] == 'allow' :
+                    self.extra_rules.add_allow(r[1])
                 else :
-                    self.extra_rules.add_disallow(path)
+                    self.extra_rules.add_disallow(r[1])
         else :
             self.extra_rules = self.DEFAULT
 
@@ -252,7 +257,7 @@ class RobotParser(object) :
         ua = useragent or self.user_agent or "*"
         for rule in self._rulesets :
             if rule.match_useragent(ua) :
-                return Matcher(rule, self.extra_rules)
+                return Matcher(rule, self.extra_rules, self._debug)
         return self.extra_rules
 
     def __str__(self) :

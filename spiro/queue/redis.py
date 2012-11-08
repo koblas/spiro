@@ -78,15 +78,17 @@ class RedisQueue(SpiderQueue):
             SEEN_SET is only added to after a URL is successfully crawled
             since once it's crawled it will be removed from the Queue 
         """
+
         if not task.force and task.url in self._seen_cache:
             #logging.debug("RedisQueue: SEEN %s in cache" % task.url)
             return
         self._seen_cache[task.url] = True
 
-        (clnt, val), kw = yield gen.Task(self.redis.sismember, SEEN_SET, task.url)
-        if val:
-            #logging.debug("RedisQueue: SEEN %s in visited set" % task.url)
-            return
+        if not task.force:
+            (clnt, val), kw = yield gen.Task(self.redis.sismember, SEEN_SET, task.url)
+            if val:
+                #logging.debug("RedisQueue: SEEN %s in visited set" % task.url)
+                return
 
         self.redis.zadd(URL_QUEUE_KEY % task.url_host, 1, task.url)
 

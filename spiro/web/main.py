@@ -85,8 +85,6 @@ class LogEntriesDataHandler(tornado.web.RequestHandler):
 
     @classmethod
     def update_logs(cls, sender, document, *args, **kwargs):
-        print sender, document, args, kwargs
-
         cls.token = int(round(time.time() * 1000))
         cls.LOG_LINES.append((cls.token, document))
         if len(cls.LOG_LINES) > 200:
@@ -207,7 +205,7 @@ class StatsDataHandler(tornado.web.RequestHandler):
         return self.finish(PageStats.stats())
 
 @route("/data/stats/pipeline$")
-class StatsDataHandler(tornado.web.RequestHandler):
+class PipelineStatsDataHandler(tornado.web.RequestHandler):
     def get(self):
         metrics = {}
         for k, v in systemMetrics.items():

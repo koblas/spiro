@@ -10,7 +10,6 @@ class SpiderBucket(deque):
         self._parent = parent
 
         self._delay   = None
-        self._time    = datetime.now()
         self._counter = 0
 
         super(SpiderBucket, self).__init__(*args, **kwargs)
@@ -20,17 +19,8 @@ class SpiderBucket(deque):
             return None, None
 
         # If the bucket is "busy"
-        if timenow and self._time > timenow:
-            return None, None
-
         if self._processing == (self._concurrent_crawler or self._parent.default_concurrency):
             return None, None
-
-        self._time = timenow
-        if self._delay:
-            self._time += self._delay
-        elif self._parent:
-            self._time += self._parent._default_delay_td
 
         self._counter    += 1
         self._processing += 1
@@ -46,7 +36,6 @@ class SpiderQueue(object):
     def __init__(self):
         self._length = 0
         self._buckets = defaultdict(lambda *a: self.BUCKET_CLASS(parent=self))
-        self._last_time = None
         self._bucket_list = []
         self._bucket_idx = 0
 

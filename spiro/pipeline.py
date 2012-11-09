@@ -34,7 +34,7 @@ class Pipeline(object):
                 systemMetrics.add('pipeline:%s:time' % item.name, dt)
                 systemMetrics.incr('pipeline:%s:calls' % item.name)
             except Exception as e:
-                logging.error("Pipeline Exception", e)
+                logging.error("Pipeline Exception", exc_info=e)
 
             action, res = yvalue
 

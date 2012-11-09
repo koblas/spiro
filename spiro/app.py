@@ -57,7 +57,6 @@ class Application(tornado.web.Application):
         self.redis = redis.Client()
         self.redis.connect()
         self.work_queue = RedisQueue(self.redis)
-        self.work_queue.default_delay = self.user_settings.crawl_delay
 
         routes = route.get_routes()
         # Hast to be the last route...
@@ -79,8 +78,7 @@ class Application(tornado.web.Application):
     def _settings_update(self, sender, document, *args, **kwargs):
         """When the user settings change"""
 
-        # Update the default crawl delay
-        self.work_queue.default_delay = document.crawl_delay
+        # Update the default crawl 
         self.work_queue.default_concurrency = document.domain_concurrency
 
         # Update the fetcher pool

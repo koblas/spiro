@@ -27,17 +27,24 @@ class Fetch(Step):
         task.request = httpclient.HTTPRequest(task.url, use_gzip=self.use_gzip, user_agent=self.user_agent)
 
         tnow = time.time()
-        tv = self.cache.get(task.url_host)
-        tnext = (tv or tnow) + self.__class__.default_delay
-        if tv is not None and tnow < tnext:
+        tv = self.cache.get(task.url_host, tnow)
+        if tv > tnow:
+            tnext = tv + self.delay
+            self.cache[task.url_host] = tnext
             logging.debug("Fetching on timer in %.2f seconds" % (tnext - tnow))
             self.ioloop.add_timeout(tnext, partial(self.fetch, task, callback))
-            return
-        self.fetch(task, callback)
+        else:
+            logging.debug("Fetcher not busy %r" % (tv))
+            self.cache[task.url_host] = tnow + self.delay
+            self.fetch(task, callback)
+
+    @property
+    def delay(self):
+        return self.__class__.default_delay
 
     @gen.engine
     def fetch(self, task, callback):
-        self.cache[task.url_host] = time.time()
+        logging.debug("Starting fetch of url=%s" % (task.url))
         task.response = yield gen.Task(self.client.fetch, task.request)
 
         if task.response.body:

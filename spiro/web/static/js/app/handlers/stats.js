@@ -53,8 +53,10 @@ function (app, $, _, Backbone, Models) {
                 },
                 yAxis: [
                     {
+                        min: 0,
                         title: { text: "Bytes" }
                     }, {
+                        min: 0,
                         title: { text: "PPS" },
                         opposite: true
                     }
